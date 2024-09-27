@@ -73,6 +73,17 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
     apiService.post(apiEndpoint, data);
     localStorage.setItem("is-auth", "true");
+
+    // const response = await apiService.post(apiEndpoint, data);
+    // // Verifique se a resposta é bem-sucedida
+    // if (response.success) {
+    //   localStorage.setItem("is-auth", "true");
+    //   navigate('/dashboard'); // Redireciona para a página desejada após login bem-sucedido
+    // } else {
+    //   // Lógica para lidar com falhas de login (se necessário)
+    //   console.error("Login failed", response.message);
+    // }
+
   };
 
   const validateInputs = () => {
