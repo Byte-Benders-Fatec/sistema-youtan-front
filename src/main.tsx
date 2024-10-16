@@ -7,6 +7,7 @@ import 'flowbite-react';
 import 'flowbite';
 import DashboardLayout from './components/DashboardLayout';
 import Users from './routes/Users';
+import TeamsPage from './pages/Teams';
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
   {
     path: "/usuarios",
     element: <Users />,
+  },
+  {
+    path: "/times",
+    element: <TeamsPage />,
   },
   {
     path: "/login",
