@@ -68,11 +68,11 @@ const UsersTable = () => {
     }, []);
     
     const [searchTerm, setSearchTerm] = useState('')
-    const [newUser, setNewUser] = useState({ id: 0, name: '', email: '', role: '', team: '' })
+    const [newUser, setNewUser] = useState({ id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} })
     const [selectedUser, setSelectedUser] = useState({ id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} })
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleUserSelect = (user: User) => {
+    const handleUserSelect = (user: User) => { 
         setSelectedUser({
             id: user.id,
             name: user.name,
@@ -157,7 +157,9 @@ const UsersTable = () => {
 
                       <div>
                         <Label htmlFor="role">Cargo</Label>
-                        <Select>
+                        <Select
+                        onValueChange={(role) => {setNewUser({...newUser, role})}}
+                        >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Escolha um cargo" />
                             </SelectTrigger>
@@ -173,14 +175,23 @@ const UsersTable = () => {
 
                       <div>
                         <Label htmlFor="team">Time</Label>
-                        <Select>
+                        <Select
+                        onValueChange={(teamId) => {
+                            const newTeam = teams.find(team => team.id === Number(teamId));
+                            if (newTeam) {
+                              setNewUser({
+                                ...newUser,
+                                team: { id: newTeam.id, name: newTeam.name }
+                              });
+                            }
+                          }}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Escolha um time" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
                                 {teams.map((team) => (
-                                    <SelectItem value={team.name}>{team.name}</SelectItem>
+                                    <SelectItem key={team.id} value={team.id.toString()}>{team.name}</SelectItem>
                                 ))}
                                 </SelectGroup>
                             </SelectContent>
