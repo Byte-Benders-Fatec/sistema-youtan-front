@@ -1,13 +1,15 @@
-import { UserX } from "lucide-react"
+import { X } from "lucide-react"
+import React from "react"
 
-const NotFound = () => {
+const NotFound = (props) => {
   return (
     <div className="grid justify-center">
         <div className="flex justify-center text-2xl">
-            <UserX size={"48px"}/>
+            <X size={"48px"}/>
+            {props.icon}
         </div>
         
-        <h1>Nenhum usuário encontrado.</h1>
+        <h1>Nenhum {props.name} encontrado.</h1>
     </div>
   )
 }

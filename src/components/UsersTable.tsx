@@ -401,7 +401,7 @@ const UsersTable = () => {
                 ))}
               </TableBody>
             </Table>
-            ): (<NotFound />)}
+            ): (<NotFound name='usuário'/>)}
             <div className="flex justify-between mt-4">
               <Button variant="outline" disabled size="sm">
                 <ChevronLeft className="mr-2 h-4 w-4" />
