@@ -8,6 +8,7 @@ import 'flowbite';
 import DashboardLayout from './components/DashboardLayout';
 import Users from './routes/Users';
 import TeamsPage from './pages/Teams';
+import FormsPage from './pages/Forms';
 
 const router = createBrowserRouter([
   {
@@ -29,7 +30,14 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+
+  },
+  {
+    path: "/formularios",
+    element: <FormsPage />,
+
   }
+
 ]);
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
