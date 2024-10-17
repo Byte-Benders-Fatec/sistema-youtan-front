@@ -24,21 +24,11 @@ import {
   Download, 
   ChevronLeft, 
   ChevronRight,
-  TrashIcon,
-  Edit,
 } from "lucide-react"
 import ApiService from '@/services/ApiService'
 import {Team} from '@/types/Team'
 import { DialogDescription } from '@radix-ui/react-dialog';
 
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
 import NotFound from './NotFound'
 
 const TeamsTable = () => {
@@ -161,7 +151,6 @@ const TeamsTable = () => {
                 <TableRow>
                 <TableHead>ID</TableHead>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
