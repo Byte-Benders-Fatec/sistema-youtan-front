@@ -30,8 +30,14 @@ import ApiService from '@/services/ApiService'
 import { DialogDescription } from '@radix-ui/react-dialog';
 
 import NotFound from './NotFound'
-import { SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from '@radix-ui/react-select'
-import { Select } from 'flowbite-react'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const FormsTable = () => {
     const apiService = new ApiService();
