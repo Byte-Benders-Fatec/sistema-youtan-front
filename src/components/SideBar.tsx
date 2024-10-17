@@ -1,6 +1,6 @@
+import ApiService from "@/services/ApiService"
 import { 
   LayoutDashboard, 
-  Package, 
   Settings, 
   LogOut,
   Text,
@@ -9,6 +9,14 @@ import {
 } from "lucide-react"
 
 const SideBarLayout = () => {
+  const logout = () => {
+    const apiService = new ApiService();
+    const apiEndpoint = "public/auth/logout";
+
+    apiService.get(apiEndpoint)
+    localStorage.setItem("is-auth", "false");
+    window.location.href = "/login"
+  }
   return (
     <aside className="w-64 bg-white shadow-md">
           <div className="p-4">
@@ -37,7 +45,7 @@ const SideBarLayout = () => {
               <Settings className="mr-3 h-5 w-5" />
               Configurações
               </a>
-              <a href="#" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200">
+              <a href="#" onClick={() => {logout()}} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200">
               <LogOut className="mr-3 h-5 w-5" />
               Sair
               </a>
