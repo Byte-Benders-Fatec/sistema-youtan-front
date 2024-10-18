@@ -3,12 +3,11 @@ import ReactDOM from 'react-dom/client';
 import './App.css';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import Login from "./routes/Login";
-import 'flowbite-react';
-import 'flowbite';
 import DashboardLayout from './components/DashboardLayout';
 import Users from './routes/Users';
 import TeamsPage from './pages/Teams';
 import FormsPage from './pages/Forms';
+import QuestionsPage from './pages/Questions';
 
 const router = createBrowserRouter([
   {
@@ -35,8 +34,13 @@ const router = createBrowserRouter([
   {
     path: "/formularios",
     element: <FormsPage />,
-
-  }
+    children: [
+      {
+        path: ":id",
+        element: <QuestionsPage />
+      }
+    ]
+  },
 
 ]);
 

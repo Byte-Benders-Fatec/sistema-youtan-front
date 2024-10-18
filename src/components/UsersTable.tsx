@@ -13,6 +13,7 @@ import {
 } from "./ui/table"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -90,22 +91,70 @@ const UsersTable = () => {
         (user.team?.name?.toLowerCase() ?? '').includes(searchTerm.toLowerCase())
     ): [];
 
-    const handleAddUser = (e: React.FormEvent) => {
+    const handleAddUser = async (e: React.FormEvent) => {
+      try {
+        e.preventDefault();
         setIsLoading(true);
-        e.preventDefault()
-        apiService.post(apiEndpoint, newUser)
 
-        setIsLoading(false);
+        const response = await apiService.post(apiEndpoint, newUser);
+        if (response.status == 200) {
+          console.log("Usuario criado com sucesso!");
+        } else {
+          console.log(response.data.message);
+        }
+
+      } catch (error) {
+          console.error("Erro ao adicionar usuário! Tente novamente...");
+
+      } finally {
+          setTimeout(() => {
+            setIsLoading(false);
+        }, 1500);
+      }
+  };
+
+    const handleUpdateUser = async (e: React.FormEvent) => {
+      try {
+        e.preventDefault();
+        setIsLoading(true);
+
+        const response = await apiService.put(`${apiEndpoint}/${selectedUser.id}`, selectedUser);
+        if (response.status == 200) {
+          console.log("Usuario atualizado com sucesso!");
+        } else {
+          console.log(response.data.message);
+        }
+
+      } catch (error) {
+          console.error("Erro ao adicionar usuário! Tente novamente...");
+
+      } finally {
+          setTimeout(() => {
+            setIsLoading(false);
+        }, 1500);
+      }
     }
 
-    const handleUpdateUser = (e: React.FormEvent) => {
-        e.preventDefault()
-        apiService.put(`${apiEndpoint}/${selectedUser.id}`, selectedUser)
-    }
+    const handleRemoveUser = async (e: React.FormEvent) => {
+      try {
+        e.preventDefault();
+        setIsLoading(true);
 
-    const handleRemoveUser = (e: React.FormEvent) => {
-        e.preventDefault()
-        apiService.delete(`${apiEndpoint}/${selectedUser.id}`)
+        const response = await apiService.delete(`${apiEndpoint}/${selectedUser.id}`);
+        if (response.status == 200) {
+          console.log("Usuario excluído com sucesso!");
+        } else {
+          console.log(response.data.message);
+        }
+
+      } catch (error) {
+          console.error("Erro ao adicionar usuário! Tente novamente...");
+
+      } finally {
+          setTimeout(() => {
+            setIsLoading(false);
+        }, 1500);
+      }
     }
 
     return (
@@ -197,8 +246,14 @@ const UsersTable = () => {
                             </SelectContent>
                         </Select>
                       </div>
-                      <div className='flex justify-end'>
-                        {isLoading? (<LoaderCircle className="animate-spin" />)
+                      <div className='flex justify-end gap-1'>
+                      <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                          Cancelar
+                        </Button>
+                      </DialogClose>
+                        {isLoading? (
+                          <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
                         :
                         (<Button type="submit">Adicionar</Button>)}
                       </div>
@@ -328,8 +383,16 @@ const UsersTable = () => {
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        <div className='flex justify-end'>
-                                            <Button type="submit">Atualizar</Button>
+                                        <div className='flex justify-end gap-1'>
+                                          <DialogClose asChild>
+                                            <Button type="button" variant="secondary">
+                                              Cancelar
+                                            </Button>
+                                          </DialogClose>
+                                          {isLoading? (
+                                            <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                                          :
+                                          (<Button type="submit">Atualizar</Button>)}
                                         </div>
                                     </form>
                                 </DialogContent>
@@ -358,6 +421,7 @@ const UsersTable = () => {
                                             required
                                             />
                                         </div>
+
                                         <div>
                                             <Label htmlFor="name">Nome</Label>
                                             <Input
@@ -368,6 +432,7 @@ const UsersTable = () => {
                                             required
                                             />
                                         </div>
+
                                         <div>
                                             <Label htmlFor="email">Email</Label>
                                             <Input
@@ -379,6 +444,7 @@ const UsersTable = () => {
                                             required
                                             />
                                         </div>
+
                                         <div>
                                             <Label htmlFor="role">Cargo</Label>
                                             <Input
@@ -389,6 +455,7 @@ const UsersTable = () => {
                                             required
                                             />
                                         </div>
+
                                         <div>
                                             <Label htmlFor="team">Time</Label>
                                             <Input
@@ -399,8 +466,17 @@ const UsersTable = () => {
                                             required
                                             />
                                         </div>
-                                        <div className='flex justify-end'>
-                                            <Button type="submit" className='bg-red-800'>Excluir</Button>
+
+                                        <div className='flex justify-end gap-1'>
+                                          <DialogClose asChild>
+                                            <Button type="button" variant="secondary">
+                                              Cancelar
+                                            </Button>
+                                          </DialogClose>
+                                          {isLoading? (
+                                            <Button type="submit" className='bg-red-800' disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                                          :
+                                          (<Button type="submit" className='bg-red-800'>Excluir</Button>)}
                                         </div>
                                     </form>
                                 </DialogContent>
