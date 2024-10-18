@@ -12,6 +12,9 @@ import { styled } from '@mui/material/styles';
 import AppTheme from '../shared-theme/AppTheme';
 import ApiService from '../services/ApiService';
 import { useNavigate } from 'react-router-dom';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import { LoaderCircle } from 'lucide-react';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -56,28 +59,16 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 }));
 
 
-export default function SignIn(props: { disableCustomTheme?: boolean }) {
+export default function SignIn() {
   const navigate = useNavigate();
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-
-  const handleSubmit = async(event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    try {
-      const data = new FormData(event.currentTarget);
-      const apiService = new ApiService();
-      const apiEndpoint = "public/auth/login";
-
-      await apiService.post(apiEndpoint, data);
-      localStorage.setItem("is-auth", "true");
-      navigate('/cadastro');
-    } catch (error) {
-      return;
-    }
-    
-  };
+  
+  const [loginError, setLoginError] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isFormValid, setIsFormValid] = React.useState(true);
 
   const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
@@ -87,7 +78,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
     if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
       setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
+      setEmailErrorMessage('Por favor, digite um email válido.');
       isValid = false;
     } else {
       setEmailError(false);
@@ -96,14 +87,48 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
     if (!password.value || password.value.length < 6) {
       setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+      setPasswordErrorMessage('A senha deve conter no mínimo 6 caractres.');
       isValid = false;
     } else {
       setPasswordError(false);
       setPasswordErrorMessage('');
     }
 
+    setIsFormValid(isValid);
     return isValid;
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!validateInputs()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const data = new FormData(event.currentTarget);
+      const apiService = new ApiService();
+      const apiEndpoint = "public/auth/login";
+
+      const response = (await apiService.post(apiEndpoint, data)).data;
+      console.log(response);
+      
+      localStorage.setItem("is-auth", "true");
+      navigate('/dashboard');
+    } catch (error: any) {
+      if (error.status == 401) {
+        setLoginError("Usuário ou senha inválidos.");
+      } else {
+        setLoginError("Tente novamente mais tarde.");
+      }
+      
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1500);
+    }
   };
 
   return (
@@ -166,15 +191,33 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 color={passwordError ? 'error' : 'primary'}
               />
             </FormControl>
-            <Button
+            {isLoading? (<Button
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              disabled
             >
-              Sign in
-            </Button>
+              <LoaderCircle className="animate-spin" />Aguarde
+            </Button>) : (<Button
+              type="submit"
+              fullWidth
+              variant="contained"
+            >
+              Entrar
+            </Button>) }
+            
           </Box>
+
+          { loginError && !isLoading && isFormValid ? (
+          <Alert variant="destructive">
+            <ExclamationTriangleIcon className="h-4 w-4" />
+            <AlertTitle></AlertTitle>
+            <AlertDescription>
+              {loginError}
+            </AlertDescription>
+          </Alert>) : (<div></div>)
+          }
+
         </Card>
       </SignInContainer>
     </AppTheme>
