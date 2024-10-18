@@ -11,4 +11,18 @@ interface Team {
     name: string;
 }
 
-export type { User, Team };
+interface Form {
+    id: number;
+    category: string;
+    questions: Question[];
+}
+
+interface Question {
+    id: number;
+    title: string;
+    alternatives: string;
+    type: string;
+    form: Form;
+}
+
+export type { User, Team, Form, Question };

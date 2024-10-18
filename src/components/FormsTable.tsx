@@ -25,7 +25,7 @@ import {
   ChevronLeft, 
   ChevronRight,
 } from "lucide-react"
-import {Form} from '@/types/Form'
+import {Form} from '@/types/User'
 import ApiService from '@/services/ApiService'
 import { DialogDescription } from '@radix-ui/react-dialog';
 
