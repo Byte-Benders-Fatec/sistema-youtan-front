@@ -13,6 +13,7 @@ import {
 } from "./ui/table"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -71,8 +72,10 @@ const QuestionsTable = () => {
     const [newQuestion, setNewQuestion] = useState({ id: 0, title: '', alternatives: "", type: "", form: id})
     const [selectedQuestion, setSelectedQuestion] = useState({ id: 0, title: '', alternatives: "", type: "", form: id})
     const [isLoading, setIsLoading] = useState(false);
+    const [addIsOpen, setAddIsOpen] = useState(false);
+    const [updateIsOpen, setUpdateIsOpen] = useState(false);
 
-    const handleFormSelect = (question: Question) => {
+    const handleQuestionSelect = (question: Question) => {
         setSelectedQuestion({
             id: question.id,
             title: question.title,
@@ -89,28 +92,92 @@ const QuestionsTable = () => {
         (question.type?.toLowerCase() ?? '').includes(searchTerm.toLowerCase())
     ): [];
 
-    const handleAddForm = (e: React.FormEvent) => {
+    const handleAddQuestion = async (e: React.FormEvent) => {
+      try {
+        e.preventDefault();
         setIsLoading(true);
-        e.preventDefault()
-        apiService.post(apiEndpoint, newQuestion)
 
-        setIsLoading(false);
-    }
+        const response = await apiService.post(apiEndpoint, newQuestion);
+        if (response.data.error) {
+          throw new Error()
+        } else {
+          const question = response.data;
+          questions.push(
+            {id: question.id,
+              title: question.title,
+              alternatives: question.alternatives,
+              type: question.type,
+              form: question.form}
+          );
+        }
 
-    const handleUpdateForm = (e: React.FormEvent) => {
-        e.preventDefault()
-        apiService.put(`${apiEndpoint}/${selectedQuestion.id}`, selectedQuestion)
-    }
+      } catch (error: any) {
+        if (error.status == 400) {
+          console.log("Preencha todos os campos.");
+        } else {
+          console.log("Tente novamente mais tarde.");
+        }
+        
+      } finally {
+          setTimeout(() => {
+            setIsLoading(false);
+            setAddIsOpen(false);
+        }, 1500);
+      }
+  };
 
-    const handleRemoveForm = (e: React.FormEvent) => {
-        e.preventDefault()
-        apiService.delete(`${apiEndpoint}/${selectedQuestion.id}`)
+  const handleUpdateQuestion = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+      setIsLoading(true);
+
+      const response = await apiService.put(`${apiEndpoint}/${selectedQuestion.id}`, selectedQuestion);
+      if (response.data.error) {
+        throw new Error()
+      } else {
+        const updatedQuestion = response.data;
+        const questionIdx = questions.findIndex(question =>  question.id === selectedQuestion.id);
+        questions[questionIdx] = updatedQuestion;
+      }
+
+    } catch (error: any) {
+        console.error("Erro ao adicionar questão! Tente novamente...");
+
+    } finally {
+        setTimeout(() => {
+          setIsLoading(false);
+          setUpdateIsOpen(false);
+      }, 1500);
     }
+  }
+
+  const handleRemoveQuestion = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+      setIsLoading(true);
+
+      const response = await apiService.delete(`${apiEndpoint}/${selectedQuestion.id}`);
+      if (response.data.error) {
+        throw new Error()
+      } else {
+        const questionIdx = questions.findIndex(question =>  question.id === selectedQuestion.id)
+        questions.splice(questionIdx, 1);
+      }
+
+    } catch (error: any) {
+      console.log(error);
+      
+    } finally {
+        setTimeout(() => {
+          setIsLoading(false);
+      }, 1500);
+    }
+  }
 
     return (
         <Card>
           <CardHeader>
-            <CardTitle className='text-2xl'>Perguntas</CardTitle>
+            <CardTitle className='text-2xl'>Perguntas do Formulário ID: {id}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-end items-center mb-6">
@@ -123,7 +190,7 @@ const QuestionsTable = () => {
                 />
               </div>
               <div className="flex gap-2">
-                <Dialog>
+                <Dialog open={addIsOpen} onOpenChange={setAddIsOpen}>
                   <DialogTrigger asChild>
                     <Button variant="default">
                         <Plus /> Adicionar
@@ -133,7 +200,7 @@ const QuestionsTable = () => {
                     <DialogHeader>
                       <DialogTitle>Adicionar Nova Pergunta</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleAddForm} className="space-y-4">
+                    <form onSubmit={handleAddQuestion} className="space-y-4">
                         <div>
                             <Label htmlFor="title">Título</Label>
                             <Input
@@ -164,8 +231,8 @@ const QuestionsTable = () => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                    {questionTypes.map((type) => (
-                                        <SelectItem value={type}>{type}</SelectItem>
+                                    {questionTypes.map((type, idx) => (
+                                        <SelectItem key={idx} value={type}>{type}</SelectItem>
                                     ))}
                                     </SelectGroup>
                                 </SelectContent>
@@ -173,10 +240,18 @@ const QuestionsTable = () => {
                         </div>
 
 
-                      <div className='flex justify-end'>
-                        {isLoading? (<LoaderCircle className="animate-spin" />)
-                        :
-                        (<Button type="submit">Adicionar</Button>)}
+                        <div className='flex justify-end gap-1'>
+                        <DialogClose asChild>
+                        {isLoading? (<Button disabled type="button" variant="secondary">
+                            Cancelar
+                          </Button>) : (<Button type="button" variant="secondary">
+                            Cancelar
+                          </Button>)}
+                        </DialogClose>
+                          {isLoading? (
+                            <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                          :
+                          (<Button type="submit">Adicionar</Button>)}
                       </div>
                     </form>
                   </DialogContent>
@@ -212,78 +287,13 @@ const QuestionsTable = () => {
 
                     <TableCell>
                         <div className='flex gap-1'>
+                        <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleQuestionSelect(question), setUpdateIsOpen(true)}}>
+                          <Pen />
+                        </Button>
 
                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleFormSelect(question)}}>
-                                        <Pen />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Atualizar Formulário</DialogTitle>
-                                    </DialogHeader>
-                                    <form onSubmit={handleUpdateForm} className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="id">ID</Label>
-                                            <Input
-                                            disabled
-                                            id="id"
-                                            value={selectedQuestion.id}
-                                            onChange={(e) => setSelectedQuestion({...selectedQuestion, id: Number(e.target.value)})}
-                                            required
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="title">Título</Label>
-                                            <Input
-                                            id="title"
-                                            value={selectedQuestion.title}
-                                            onChange={(e) => setSelectedQuestion({...selectedQuestion, title: e.target.value})}
-                                            required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="alternatives">Alternativas</Label>
-                                            <Input
-                                            id="alternatives"
-                                            value={selectedQuestion.alternatives}
-                                            onChange={(e) => setSelectedQuestion({...selectedQuestion, alternatives: e.target.value})}
-                                            required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="type">Tipo</Label>
-                                            <Select
-                                            onValueChange={(type) => {setSelectedQuestion({...selectedQuestion, type})}}
-                                            >
-                                                <SelectTrigger className="w-[180px]">
-                                                    <SelectValue placeholder="Escolha um tipo" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectGroup>
-                                                    {questionTypes.map((type) => (
-                                                        <SelectItem value={type}>{type}</SelectItem>
-                                                    ))}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-        
-                            
-                                        <div className='flex justify-end'>
-                                            <Button type="submit">Atualizar</Button>
-                                        </div>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                            
-
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleFormSelect(question)}}>
+                                    <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleQuestionSelect(question)}}>
                                         <X />
                                     </Button>
                                 </DialogTrigger>
@@ -292,7 +302,7 @@ const QuestionsTable = () => {
                                         <DialogTitle>Excluir Formulário</DialogTitle>
                                         <DialogDescription>Tem certeza que deseja excluir?</DialogDescription>
                                     </DialogHeader>
-                                    <form onSubmit={handleRemoveForm} className="space-y-4">
+                                    <form onSubmit={handleRemoveQuestion} className="space-y-4">
                                         <div>
                                             <Label htmlFor="id">ID</Label>
                                             <Input
@@ -314,8 +324,18 @@ const QuestionsTable = () => {
                                             />
                                         </div>
 
-                                        <div className='flex justify-end'>
-                                            <Button type="submit" className='bg-red-800'>Excluir</Button>
+                                        <div className='flex justify-end gap-1'>
+                                          <DialogClose asChild>
+                                          {isLoading? (<Button disabled type="button" variant="secondary">
+                                            Cancelar
+                                          </Button>) : (<Button type="button" variant="secondary">
+                                            Cancelar
+                                          </Button>)}
+                                          </DialogClose>
+                                          {isLoading? (
+                                            <Button type="submit" className='bg-red-800' disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                                          :
+                                          (<Button type="submit" className='bg-red-800'>Excluir</Button>)}
                                         </div>
                                     </form>
                                 </DialogContent>
@@ -326,8 +346,82 @@ const QuestionsTable = () => {
                   </TableRow>
                 ))}
               </TableBody>
+
+              <Dialog open={updateIsOpen} onOpenChange={setUpdateIsOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Atualizar Pergunta</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleUpdateQuestion} className="space-y-4">
+                        <div>
+                            <Label htmlFor="id">ID</Label>
+                            <Input
+                            disabled
+                            id="id"
+                            value={selectedQuestion.id}
+                            onChange={(e) => setSelectedQuestion({...selectedQuestion, id: Number(e.target.value)})}
+                            required
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="title">Título</Label>
+                            <Input
+                            id="title"
+                            value={selectedQuestion.title}
+                            onChange={(e) => setSelectedQuestion({...selectedQuestion, title: e.target.value})}
+                            required
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="alternatives">Alternativas</Label>
+                            <Input
+                            id="alternatives"
+                            value={selectedQuestion.alternatives}
+                            onChange={(e) => setSelectedQuestion({...selectedQuestion, alternatives: e.target.value})}
+                            required
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="type">Tipo</Label>
+                            <Select
+                            value={selectedQuestion.type}
+                            onValueChange={(type) => {setSelectedQuestion({...selectedQuestion, type})}}
+                            >
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Escolha um tipo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                    {questionTypes.map((type, idx) => (
+                                        <SelectItem key={idx} value={type}>{type}</SelectItem>
+                                    ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+            
+                        <div className='flex justify-end gap-1'>
+                          <DialogClose asChild>
+                          {isLoading? (<Button disabled type="button" variant="secondary">
+                            Cancelar
+                          </Button>) : (<Button type="button" variant="secondary">
+                            Cancelar
+                          </Button>)}
+                          </DialogClose>
+                          {isLoading? (
+                            <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                          :
+                          (<Button type="submit">Atualizar</Button>)}
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
             </Table>
-            ): (<NotFound name='Formulário' />)}
+            ): (<NotFound name='questão' />)}
             <div className="flex justify-between mt-4">
               <Button variant="outline" disabled size="sm">
                 <ChevronLeft className="mr-2 h-4 w-4" />

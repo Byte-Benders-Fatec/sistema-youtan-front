@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import { LoaderCircle, UserPen, UserRoundPlus, UserRoundX } from "lucide-react"
+import { LoaderCircle, Plus, UserPen, UserRoundPlus, UserRoundX } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -31,6 +31,7 @@ import {
 import ApiService from '@/services/ApiService'
 import {User, Team} from '@/types/User'
 import { DialogDescription } from '@radix-ui/react-dialog';
+import { useNavigate } from 'react-router-dom';
 
 import {
     Select,
@@ -72,6 +73,7 @@ const UsersTable = () => {
     const [newUser, setNewUser] = useState({ id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} })
     const [selectedUser, setSelectedUser] = useState({ id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} })
     const [isLoading, setIsLoading] = useState(false);
+    const [userAddError, setUserAddError] = React.useState("");
 
     const handleUserSelect = (user: User) => { 
         setSelectedUser({
@@ -95,20 +97,33 @@ const UsersTable = () => {
       try {
         e.preventDefault();
         setIsLoading(true);
+        setUserAddError("");
 
         const response = await apiService.post(apiEndpoint, newUser);
-        if (response.status == 200) {
-          console.log("Usuario criado com sucesso!");
+        if (response.data.error) {
+          throw new Error()
         } else {
-          console.log(response.data.message);
+          const user = response.data;
+          users.push(
+            {id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              team: user.team}
+          );
         }
 
-      } catch (error) {
-          console.error("Erro ao adicionar usuário! Tente novamente...");
-
+      } catch (error: any) {
+        if (error.status == 400) {
+          setUserAddError("Preencha todos os campos.");
+        } else {
+          setUserAddError("Tente novamente mais tarde.");
+        }
+        
       } finally {
           setTimeout(() => {
             setIsLoading(false);
+            setAddIsOpen(false);
         }, 1500);
       }
   };
@@ -119,18 +134,21 @@ const UsersTable = () => {
         setIsLoading(true);
 
         const response = await apiService.put(`${apiEndpoint}/${selectedUser.id}`, selectedUser);
-        if (response.status == 200) {
-          console.log("Usuario atualizado com sucesso!");
+        if (response.data.error) {
+          throw new Error()
         } else {
-          console.log(response.data.message);
+          const updatedUser = response.data;
+          const userIdx = users.findIndex(userr =>  userr.id === selectedUser.id);
+          users[userIdx] = updatedUser;
         }
 
-      } catch (error) {
+      } catch (error: any) {
           console.error("Erro ao adicionar usuário! Tente novamente...");
 
       } finally {
           setTimeout(() => {
             setIsLoading(false);
+            setUpdateIsOpen(false);
         }, 1500);
       }
     }
@@ -141,21 +159,25 @@ const UsersTable = () => {
         setIsLoading(true);
 
         const response = await apiService.delete(`${apiEndpoint}/${selectedUser.id}`);
-        if (response.status == 200) {
-          console.log("Usuario excluído com sucesso!");
+        if (response.data.error) {
+          throw new Error()
         } else {
-          console.log(response.data.message);
+          const userIdx = users.findIndex(userr =>  userr.id === selectedUser.id)
+          users.splice(userIdx, 1);
         }
 
-      } catch (error) {
-          console.error("Erro ao adicionar usuário! Tente novamente...");
-
+      } catch (error: any) {
+        console.log(error);
+        
       } finally {
           setTimeout(() => {
             setIsLoading(false);
         }, 1500);
       }
     }
+
+    const [addIsOpen, setAddIsOpen] = useState(false);
+    const [updateIsOpen, setUpdateIsOpen] = useState(false);
 
     return (
         <Card>
@@ -173,10 +195,10 @@ const UsersTable = () => {
                 />
               </div>
               <div className="flex gap-2">
-                <Dialog>
+                <Dialog open={addIsOpen} onOpenChange={setAddIsOpen}>
                   <DialogTrigger asChild>
                     <Button variant="default">
-                        <UserRoundPlus /> Adicionar
+                        <Plus /> Adicionar
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -214,8 +236,8 @@ const UsersTable = () => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                {userRoles.map((role) => (
-                                    <SelectItem value={role}>{role}</SelectItem>
+                                {userRoles.map((role, idx) => (
+                                    <SelectItem key={idx} value={role}>{role}</SelectItem>
                                 ))}
                                 </SelectGroup>
                             </SelectContent>
@@ -248,15 +270,18 @@ const UsersTable = () => {
                       </div>
                       <div className='flex justify-end gap-1'>
                       <DialogClose asChild>
-                        <Button type="button" variant="secondary">
+                      {isLoading? (<Button disabled type="button" variant="secondary">
                           Cancelar
-                        </Button>
+                        </Button>) : (<Button type="button" variant="secondary">
+                          Cancelar
+                        </Button>)}
                       </DialogClose>
                         {isLoading? (
                           <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
                         :
                         (<Button type="submit">Adicionar</Button>)}
                       </div>
+
                     </form>
                   </DialogContent>
                 </Dialog>
@@ -283,8 +308,8 @@ const UsersTable = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow>
+                {filteredUsers.map((user, idx) => (
+                  <TableRow key={idx}>
                     <TableCell>{user.id}</TableCell>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -300,105 +325,10 @@ const UsersTable = () => {
                     <TableCell>
                         <div className='flex gap-1'>
 
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleUserSelect(user)}}>
-                                        <UserPen />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Atualizar Usuário</DialogTitle>
-                                    </DialogHeader>
-                                    <form onSubmit={handleUpdateUser} className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="id">ID</Label>
-                                            <Input
-                                            disabled
-                                            id="id"
-                                            value={selectedUser.id}
-                                            onChange={(e) => setSelectedUser({...selectedUser, id: Number(e.target.value)})}
-                                            required
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="name">Nome</Label>
-                                            <Input
-                                            id="name"
-                                            value={selectedUser.name}
-                                            onChange={(e) => setSelectedUser({...selectedUser, name: e.target.value})}
-                                            required
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="email">Email</Label>
-                                            <Input
-                                            id="email"
-                                            type="email"
-                                            value={selectedUser.email}
-                                            onChange={(e) => setSelectedUser({...selectedUser, email: e.target.value})}
-                                            required
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="role">Cargo</Label>
-                                            <Select 
-                                            value={selectedUser.role}
-                                            onValueChange={(role) => setSelectedUser({...selectedUser, role})}
-                                            >
-                                                <SelectTrigger className="w-[180px]">
-                                                    <SelectValue placeholder="Escolha um cargo" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectGroup>
-                                                    {userRoles.map((role) => (
-                                                        <SelectItem value={role}>{role}</SelectItem>
-                                                    ))}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="team">Time</Label>
-                                            <Select value={selectedUser.team.id.toString()}
-                                            onValueChange={(teamId) => {
-                                                const selectedTeam = teams.find(team => team.id === Number(teamId));
-                                                if (selectedTeam) {
-                                                  setSelectedUser({
-                                                    ...selectedUser,
-                                                    team: { id: selectedTeam.id, name: selectedTeam.name }
-                                                  });
-                                                }
-                                              }}>
-                                                <SelectTrigger className="w-[180px]">
-                                                    <SelectValue placeholder="Escolha um time" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectGroup>
-                                                    {teams.map((team) => (
-                                                        <SelectItem key={team.id} value={team.id.toString()}>{team.name}</SelectItem>
-                                                    ))}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className='flex justify-end gap-1'>
-                                          <DialogClose asChild>
-                                            <Button type="button" variant="secondary">
-                                              Cancelar
-                                            </Button>
-                                          </DialogClose>
-                                          {isLoading? (
-                                            <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
-                                          :
-                                          (<Button type="submit">Atualizar</Button>)}
-                                        </div>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                            
-
+                          <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleUserSelect(user), setUpdateIsOpen(true)}}>
+                              <UserPen />
+                          </Button>
+                      
                             <Dialog>
                                 <DialogTrigger asChild>
                                     <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleUserSelect(user)}}>
@@ -469,9 +399,11 @@ const UsersTable = () => {
 
                                         <div className='flex justify-end gap-1'>
                                           <DialogClose asChild>
-                                            <Button type="button" variant="secondary">
-                                              Cancelar
-                                            </Button>
+                                          {isLoading? (<Button disabled type="button" variant="secondary">
+                                            Cancelar
+                                          </Button>) : (<Button type="button" variant="secondary">
+                                            Cancelar
+                                          </Button>)}
                                           </DialogClose>
                                           {isLoading? (
                                             <Button type="submit" className='bg-red-800' disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
@@ -487,6 +419,102 @@ const UsersTable = () => {
                   </TableRow>
                 ))}
               </TableBody>
+
+              <Dialog open={updateIsOpen} onOpenChange={setUpdateIsOpen}>
+                  <DialogContent>
+                      <DialogHeader>
+                          <DialogTitle>Atualizar Usuário</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleUpdateUser} className="space-y-4">
+                          <div>
+                              <Label htmlFor="id">ID</Label>
+                              <Input
+                              disabled
+                              id="id"
+                              value={selectedUser.id}
+                              onChange={(e) => setSelectedUser({...selectedUser, id: Number(e.target.value)})}
+                              required
+                              />
+                          </div>
+                          <div>
+                              <Label htmlFor="name">Nome</Label>
+                              <Input
+                              id="name"
+                              value={selectedUser.name}
+                              onChange={(e) => setSelectedUser({...selectedUser, name: e.target.value})}
+                              required
+                              />
+                          </div>
+                          <div>
+                              <Label htmlFor="email">Email</Label>
+                              <Input
+                              id="email"
+                              type="email"
+                              value={selectedUser.email}
+                              onChange={(e) => setSelectedUser({...selectedUser, email: e.target.value})}
+                              required
+                              />
+                          </div>
+                          <div>
+                              <Label htmlFor="role">Cargo</Label>
+                              <Select 
+                              value={selectedUser.role}
+                              onValueChange={(role) => setSelectedUser({...selectedUser, role})}
+                              >
+                                  <SelectTrigger className="w-[180px]">
+                                      <SelectValue placeholder="Escolha um cargo" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      <SelectGroup>
+                                      {userRoles.map((role, idx) => (
+                                          <SelectItem key={idx} value={role}>{role}</SelectItem>
+                                      ))}
+                                      </SelectGroup>
+                                  </SelectContent>
+                              </Select>
+                          </div>
+
+                          <div>
+                              <Label htmlFor="team">Time</Label>
+                              <Select value={selectedUser.team.id.toString()}
+                              onValueChange={(teamId) => {
+                                  const selectedTeam = teams.find(team => team.id === Number(teamId));
+                                  if (selectedTeam) {
+                                    setSelectedUser({
+                                      ...selectedUser,
+                                      team: { id: selectedTeam.id, name: selectedTeam.name }
+                                    });
+                                  }
+                                }}>
+                                  <SelectTrigger className="w-[180px]">
+                                      <SelectValue placeholder="Escolha um time" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      <SelectGroup>
+                                      {teams.map((team) => (
+                                          <SelectItem key={team.id} value={team.id.toString()}>{team.name}</SelectItem>
+                                      ))}
+                                      </SelectGroup>
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                          <div className='flex justify-end gap-1'>
+                            <DialogClose asChild>
+                            {isLoading? (<Button disabled type="button" variant="secondary">
+                              Cancelar
+                            </Button>) : (<Button type="button" variant="secondary">
+                              Cancelar
+                            </Button>)}
+                            </DialogClose>
+                            {isLoading? (
+                              <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                            :
+                            (<Button type="submit">Atualizar</Button>)}
+                          </div>
+                      </form>
+                  </DialogContent>
+              </Dialog>
+
             </Table>
             ): (<NotFound name='usuário'/>)}
             <div className="flex justify-between mt-4">

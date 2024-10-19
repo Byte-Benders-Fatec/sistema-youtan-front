@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import { LoaderCircle, Pen, Plus, X } from "lucide-react"
+import { List, LoaderCircle, Pen, Plus, X } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import {
 } from "./ui/table"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -38,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Link } from 'react-router-dom'
 
 const FormsTable = () => {
     const apiService = new ApiService();
@@ -82,23 +84,90 @@ const FormsTable = () => {
         (form.category?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) 
     ): [];
 
-    const handleAddForm = (e: React.FormEvent) => {
+    const handleAddForm = async (e: React.FormEvent) => {
+      try {
+        e.preventDefault();
         setIsLoading(true);
-        e.preventDefault()
-        apiService.post(apiEndpoint, newForm)
 
-        setIsLoading(false);
+        const response = await apiService.post(apiEndpoint, newForm);
+        if (response.data.error) {
+          throw new Error()
+        } else {
+          const form = response.data;
+          forms.push(
+            {
+              id: form.id,
+              category: form.category,
+              questions: form.questions
+            }
+          );
+        }
+
+      } catch (error: any) {
+        if (error.status == 400) {
+          console.log("Preencha todos os campos.");
+        } else {
+          console.log("Tente novamente mais tarde.");
+        }
+        
+      } finally {
+          setTimeout(() => {
+            setIsLoading(false);
+            setAddIsOpen(false);
+        }, 1500);
+      }
     }
 
-    const handleUpdateForm = (e: React.FormEvent) => {
-        e.preventDefault()
-        apiService.put(`${apiEndpoint}/${selectedForm.id}`, selectedForm)
+    const handleUpdateForm = async (e: React.FormEvent) => {
+      try {
+        e.preventDefault();
+        setIsLoading(true);
+
+        const response = await apiService.put(`${apiEndpoint}/${selectedForm.id}`, selectedForm);
+        if (response.data.error) {
+          throw new Error()
+        } else {
+          const updatedForm = response.data;
+          const formIdx = forms.findIndex(form =>  form.id === selectedForm.id);
+          forms[formIdx] = updatedForm;
+        }
+
+      } catch (error: any) {
+          console.error("Erro ao adicionar formulário! Tente novamente...");
+
+      } finally {
+          setTimeout(() => {
+            setIsLoading(false);
+            setUpdateIsOpen(false);
+        }, 1500);
+      }
     }
 
-    const handleRemoveForm = (e: React.FormEvent) => {
-        e.preventDefault()
-        apiService.delete(`${apiEndpoint}/${selectedForm.id}`)
+    const handleRemoveForm = async (e: React.FormEvent) => {
+      try {
+        e.preventDefault();
+        setIsLoading(true);
+
+        const response = await apiService.delete(`${apiEndpoint}/${selectedForm.id}`);
+        if (response.data.error) {
+          throw new Error()
+        } else {
+          const formIdx = forms.findIndex(form =>  form.id === selectedForm.id)
+          forms.splice(formIdx, 1);
+        }
+
+      } catch (error: any) {
+        console.log(error);
+        
+      } finally {
+          setTimeout(() => {
+            setIsLoading(false);
+        }, 1500);
+      }
     }
+
+    const [addIsOpen, setAddIsOpen] = useState(false);
+    const [updateIsOpen, setUpdateIsOpen] = useState(false);
 
     return (
         <Card>
@@ -116,7 +185,7 @@ const FormsTable = () => {
                 />
               </div>
               <div className="flex gap-2">
-                <Dialog>
+                <Dialog open={addIsOpen} onOpenChange={setAddIsOpen}>
                   <DialogTrigger asChild>
                     <Button variant="default">
                         <Plus /> Adicionar
@@ -137,8 +206,8 @@ const FormsTable = () => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                {formCategories.map((category) => (
-                                    <SelectItem value={category}>{category}</SelectItem>
+                                {formCategories.map((category, idx) => (
+                                    <SelectItem key={idx} value={category}>{category}</SelectItem>
                                 ))}
                                 </SelectGroup>
                             </SelectContent>
@@ -146,10 +215,18 @@ const FormsTable = () => {
                       </div>
 
 
-                      <div className='flex justify-end'>
-                        {isLoading? (<LoaderCircle className="animate-spin" />)
-                        :
-                        (<Button type="submit">Adicionar</Button>)}
+                      <div className='flex justify-end gap-1'>
+                        <DialogClose asChild>
+                        {isLoading? (<Button disabled type="button" variant="secondary">
+                            Cancelar
+                          </Button>) : (<Button type="button" variant="secondary">
+                            Cancelar
+                          </Button>)}
+                        </DialogClose>
+                          {isLoading? (
+                            <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                          :
+                          (<Button type="submit">Adicionar</Button>)}
                       </div>
                     </form>
                   </DialogContent>
@@ -170,103 +247,136 @@ const FormsTable = () => {
                 <TableRow>
                 <TableHead>ID</TableHead>
                   <TableHead>Categoria</TableHead>
+                  <TableHead>Quantidade de perguntas</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredForms.map((form) => (
-                  <TableRow>
+                {filteredForms.map((form, idx) => (
+                  <TableRow key={idx}>
                     <TableCell>{form.id}</TableCell>
                     <TableCell className="font-medium">{form.category}</TableCell>
+                    <TableCell className="font-medium">{form.questions? form.questions.length : 0} Pergunta(s)</TableCell>
 
                     <TableCell>
                         <div className='flex gap-1'>
+                          <Link to={`/formularios/${form.id}`}>
+                            <Button variant="ghost" className='p-1 opacity-70'>
+                              <List />
+                            </Button>
+                          </Link>
 
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleFormSelect(form)}}>
-                                        <Pen />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Atualizar Formulário</DialogTitle>
-                                    </DialogHeader>
-                                    <form onSubmit={handleUpdateForm} className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="id">ID</Label>
-                                            <Input
-                                            disabled
-                                            id="id"
-                                            value={selectedForm.id}
-                                            onChange={(e) => setSelectedForm({...selectedForm, id: Number(e.target.value)})}
-                                            required
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="category">Categoria</Label>
-                                            <Input
-                                            id="category"
-                                            value={selectedForm.category}
-                                            onChange={(e) => setSelectedForm({...selectedForm, category: e.target.value})}
-                                            required
-                                            />
-                                        </div>
+                        <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleFormSelect(form), setUpdateIsOpen(true)}}>
+                          <Pen />
+                        </Button>
+                            
+                        <Dialog>
+                          <DialogTrigger asChild>
+                              <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleFormSelect(form)}}>
+                                  <X />
+                              </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                              <DialogHeader>
+                                  <DialogTitle>Excluir Formulário</DialogTitle>
+                                  <DialogDescription>Tem certeza que deseja excluir?</DialogDescription>
+                              </DialogHeader>
+                              <form onSubmit={handleRemoveForm} className="space-y-4">
+                                  <div>
+                                      <Label htmlFor="id">ID</Label>
+                                      <Input
+                                      disabled
+                                      id="id"
+                                      value={selectedForm.id}
+                                      onChange={(e) => setSelectedForm({...selectedForm, id: Number(e.target.value)})}
+                                      required
+                                      />
+                                  </div>
+                                  <div>
+                                      <Label htmlFor="category">Categoria</Label>
+                                      <Input
+                                      disabled
+                                      id="category"
+                                      value={selectedForm.category}
+                                      onChange={(e) => setSelectedForm({...selectedForm, category: e.target.value})}
+                                      required
+                                      />
+                                  </div>
+
+                                  <div className='flex justify-end gap-1'>
+                                    <DialogClose asChild>
+                                    {isLoading? (<Button disabled type="button" variant="secondary">
+                                      Cancelar
+                                    </Button>) : (<Button type="button" variant="secondary">
+                                      Cancelar
+                                    </Button>)}
+                                    </DialogClose>
+                                    {isLoading? (
+                                      <Button type="submit" className='bg-red-800' disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                                    :
+                                    (<Button type="submit" className='bg-red-800'>Excluir</Button>)}
+                                  </div>
+                              </form>
+                          </DialogContent>
+                        </Dialog>
+                          
+                      </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+
+            <Dialog open={updateIsOpen} onOpenChange={setUpdateIsOpen}>
+              <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Atualizar Formulário</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleUpdateForm} className="space-y-4">
+                    <div>
+                        <Label htmlFor="id">ID</Label>
+                        <Input
+                        disabled
+                        id="id"
+                        value={selectedForm.id}
+                        onChange={(e) => setSelectedForm({...selectedForm, id: Number(e.target.value)})}
+                        required
+                        />
+                    </div>
+                    <div>
+                      <Label htmlFor="category">Categoria</Label>
+                      <Select value={selectedForm.category}
+                      onValueChange={(category) => setSelectedForm({...selectedForm, category})}>
+                          <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Escolha uma categoria" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectGroup>
+                              {formCategories.map((form, idx) => (
+                                  <SelectItem key={idx} value={form}>{form}</SelectItem>
+                              ))}
+                              </SelectGroup>
+                          </SelectContent>
+                      </Select>
+                    </div>
+
         
-                            
-                                        <div className='flex justify-end'>
-                                            <Button type="submit">Atualizar</Button>
-                                        </div>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                            
+                    <div className='flex justify-end gap-1'>
+                      <DialogClose asChild>
+                      {isLoading? (<Button disabled type="button" variant="secondary">
+                        Cancelar
+                      </Button>) : (<Button type="button" variant="secondary">
+                        Cancelar
+                      </Button>)}
+                      </DialogClose>
+                      {isLoading? (
+                        <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                      :
+                      (<Button type="submit">Atualizar</Button>)}
+                    </div>
+                </form>
+              </DialogContent>
+            </Dialog>
 
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" className='p-1 opacity-70' onClick={() => {handleFormSelect(form)}}>
-                                        <X />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Excluir Formulário</DialogTitle>
-                                        <DialogDescription>Tem certeza que deseja excluir?</DialogDescription>
-                                    </DialogHeader>
-                                    <form onSubmit={handleRemoveForm} className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="id">ID</Label>
-                                            <Input
-                                            disabled
-                                            id="id"
-                                            value={selectedForm.id}
-                                            onChange={(e) => setSelectedForm({...selectedForm, id: Number(e.target.value)})}
-                                            required
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="category">Categoria</Label>
-                                            <Input
-                                            disabled
-                                            id="category"
-                                            value={selectedForm.category}
-                                            onChange={(e) => setSelectedForm({...selectedForm, category: e.target.value})}
-                                            required
-                                            />
-                                        </div>
-
-                                        <div className='flex justify-end'>
-                                            <Button type="submit" className='bg-red-800'>Excluir</Button>
-                                        </div>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                            
-                        </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
             </Table>
             ): (<NotFound name='Formulário' />)}
             <div className="flex justify-between mt-4">

@@ -113,7 +113,6 @@ export default function SignIn() {
       const apiEndpoint = "public/auth/login";
 
       const response = (await apiService.post(apiEndpoint, data)).data;
-      console.log(response);
       
       localStorage.setItem("is-auth", "true");
       navigate('/dashboard');
