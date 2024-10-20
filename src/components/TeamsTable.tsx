@@ -100,6 +100,7 @@ const TeamsTable = () => {
           setTimeout(() => {
             setIsLoading(false);
             setAddIsOpen(false);
+            setNewTeam({ id: 0, name: ''});
         }, 1500);
       }
     };

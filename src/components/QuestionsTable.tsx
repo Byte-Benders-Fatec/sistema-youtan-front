@@ -122,6 +122,7 @@ const QuestionsTable = () => {
           setTimeout(() => {
             setIsLoading(false);
             setAddIsOpen(false);
+            setNewQuestion({ id: 0, title: '', alternatives: "", type: "", form: id});
         }, 1500);
       }
   };

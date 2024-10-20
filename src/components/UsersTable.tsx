@@ -31,7 +31,7 @@ import {
 import ApiService from '@/services/ApiService'
 import {User, Team} from '@/types/User'
 import { DialogDescription } from '@radix-ui/react-dialog';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import {
     Select,
@@ -124,6 +124,7 @@ const UsersTable = () => {
           setTimeout(() => {
             setIsLoading(false);
             setAddIsOpen(false);
+            setNewUser({ id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} });
         }, 1500);
       }
   };
@@ -257,15 +258,16 @@ const UsersTable = () => {
                             }
                           }}>
                             <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Escolha um time" />
+                            {teams.length > 0 ? (<SelectValue placeholder="Escolha um time" />) : (<SelectValue placeholder="Nenhum time criado!" />)}
                             </SelectTrigger>
+                            {teams.length > 0 &&
                             <SelectContent>
                                 <SelectGroup>
                                 {teams.map((team) => (
                                     <SelectItem key={team.id} value={team.id.toString()}>{team.name}</SelectItem>
                                 ))}
                                 </SelectGroup>
-                            </SelectContent>
+                            </SelectContent>}
                         </Select>
                       </div>
                       <div className='flex justify-end gap-1'>
