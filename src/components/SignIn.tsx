@@ -85,9 +85,9 @@ export default function SignIn() {
       setEmailErrorMessage('');
     }
 
-    if (!password.value || password.value.length < 6) {
+    if (!password.value || password.value.length < 5) {
       setPasswordError(true);
-      setPasswordErrorMessage('A senha deve conter no mínimo 6 caractres.');
+      setPasswordErrorMessage('A senha deve conter no mínimo 5 caractres.');
       isValid = false;
     } else {
       setPasswordError(false);
@@ -114,8 +114,10 @@ export default function SignIn() {
 
       const response = (await apiService.post(apiEndpoint, data)).data;
       
-      localStorage.setItem("is-auth", "true");
-      navigate('/dashboard');
+      setTimeout(() => {
+        localStorage.setItem("is-auth", "true");
+        navigate('/dashboard');
+      }, 1000)
     } catch (error: any) {
       if (error.status == 401) {
         setLoginError("Usuário ou senha inválidos.");
