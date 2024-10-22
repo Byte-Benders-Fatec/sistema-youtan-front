@@ -1,31 +1,6 @@
-import React, { useState } from 'react'
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
+import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog"
-import { Label } from "./ui/label"
-import { 
-  Filter, 
-  Download, 
-  ChevronLeft, 
-  ChevronRight, 
-} from "lucide-react"
 import SideBarLayout from './SideBar'
-import UsersTable from './UsersTable'
 
 const DashboardLayout: React.FC = () => {
   return (
@@ -34,7 +9,7 @@ const DashboardLayout: React.FC = () => {
 
       {/* Main content */}
       <main className="flex-1 p-8 overflow-auto">
-        <Card className="mb-8">
+        <Card className="min-h-[70vh] flex flex-col mb-8">
           <CardHeader>
             <CardTitle>Relatório Geral</CardTitle>
           </CardHeader>
