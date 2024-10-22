@@ -85,6 +85,15 @@ const QuestionsTable = () => {
         });
     };
 
+    useEffect(() => {
+      if (selectedQuestion.type === "Texto Longo") {
+        setSelectedQuestion((prev) => ({
+          ...prev,
+          alternatives: "",
+        }));
+      }
+    }, [selectedQuestion.type]);
+
     const filteredForms = (questions) ? questions.filter(question =>
         (String(question.id)?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
         (question.title?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) || 
@@ -213,16 +222,6 @@ const QuestionsTable = () => {
                         </div>
 
                         <div>
-                            <Label htmlFor="alternatives">Alternativas</Label>
-                            <Input
-                            id="alternatives"
-                            value={newQuestion.alternatives}
-                            onChange={(e) => setNewQuestion({...newQuestion, alternatives: e.target.value})}
-                            required
-                            />
-                        </div>
-
-                        <div>
                             <Label htmlFor="type">Tipo</Label>
                             <Select
                             onValueChange={(type) => {setNewQuestion({...newQuestion, type})}}
@@ -240,6 +239,17 @@ const QuestionsTable = () => {
                             </Select>
                         </div>
 
+                        {newQuestion.type !== "Texto Longo" && newQuestion.type !== "" &&
+                          <div>
+                              <Label htmlFor="alternatives">Alternativas</Label>
+                              <Input
+                              id="alternatives"
+                              value={newQuestion.alternatives}
+                              onChange={(e) => setNewQuestion({...newQuestion, alternatives: e.target.value})}
+                              required
+                              />
+                          </div>
+                        }
 
                         <div className='flex justify-end gap-1'>
                         <DialogClose asChild>
@@ -249,10 +259,17 @@ const QuestionsTable = () => {
                             Cancelar
                           </Button>)}
                         </DialogClose>
-                          {isLoading? (
-                            <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
-                          :
-                          (<Button type="submit">Adicionar</Button>)}
+                        {isLoading ? (
+                          <Button type="submit" disabled>
+                            <LoaderCircle className="animate-spin" />Aguarde
+                          </Button>
+                        ) : (
+                          newQuestion.title.length > 0 && newQuestion.type !== "" ? (
+                            <Button type="submit">Adicionar</Button>
+                          ) : (
+                            <Button disabled type="submit">Adicionar</Button>
+                          )
+                        )}
                       </div>
                     </form>
                   </DialogContent>
@@ -375,16 +392,6 @@ const QuestionsTable = () => {
                         </div>
 
                         <div>
-                            <Label htmlFor="alternatives">Alternativas</Label>
-                            <Input
-                            id="alternatives"
-                            value={selectedQuestion.alternatives}
-                            onChange={(e) => setSelectedQuestion({...selectedQuestion, alternatives: e.target.value})}
-                            required
-                            />
-                        </div>
-
-                        <div>
                             <Label htmlFor="type">Tipo</Label>
                             <Select
                             value={selectedQuestion.type}
@@ -402,6 +409,17 @@ const QuestionsTable = () => {
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {selectedQuestion.type !== "Texto Longo" && selectedQuestion.type !== "" &&
+                        <div>
+                            <Label htmlFor="alternatives">Alternativas</Label>
+                            <Input
+                            id="alternatives"
+                            value={selectedQuestion.alternatives}
+                            onChange={(e) => setSelectedQuestion({...selectedQuestion, alternatives: e.target.value})}
+                            required
+                            />
+                        </div>}
 
             
                         <div className='flex justify-end gap-1'>

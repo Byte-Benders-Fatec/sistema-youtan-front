@@ -223,10 +223,17 @@ const FormsTable = () => {
                             Cancelar
                           </Button>)}
                         </DialogClose>
-                          {isLoading? (
-                            <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
-                          :
-                          (<Button type="submit">Adicionar</Button>)}
+                        {isLoading ? (
+                          <Button type="submit" disabled>
+                            <LoaderCircle className="animate-spin" />Aguarde
+                          </Button>
+                        ) : (
+                          newForm.category !== "" ? (
+                            <Button type="submit">Adicionar</Button>
+                          ) : (
+                            <Button disabled type="submit">Adicionar</Button>
+                          )
+                        )}
                       </div>
                     </form>
                   </DialogContent>
