@@ -8,6 +8,7 @@ import Users from './routes/Users';
 import TeamsPage from './pages/Teams';
 import FormsPage from './pages/Forms';
 import QuestionsPage from './pages/Questions';
+import UsersTable from './components/UsersTable';
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,12 @@ const router = createBrowserRouter([
   {
     path: "/usuarios",
     element: <Users />,
+    children: [
+      {
+        path: "",
+        element: <UsersTable />
+      }
+    ]
   },
   {
     path: "/times",

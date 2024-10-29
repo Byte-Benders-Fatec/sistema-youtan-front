@@ -33,11 +33,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useSearchParams  } from 'react-router-dom'
+import Pagination from './Pagination'
 
 export default function UsersTable() {
   const apiService = new ApiService()
   const apiEndpoint = "private/users"
   const apiTeamEndpoint = "private/teams"
+  const [searchParams] = useSearchParams();
+  const page = Number(searchParams.get('page')) || 1;
 
   const [users, setUsers] = useState<User[]>([])
   const [userRoles, setUsersRoles] = useState<string[]>([])
@@ -50,19 +54,22 @@ export default function UsersTable() {
   const [userAddError, setUserAddError] = useState("")
   const [addIsOpen, setAddIsOpen] = useState(false)
   const [updateIsOpen, setUpdateIsOpen] = useState(false)
+  const [filterPage, setFilterPage] = useState(page)
+  const [totalUsersPage, setTotalUsersPage] = useState(0)
 
   useEffect(() => {
     const fetchUsers = async () => {
       setIsInitialLoading(true)
       try {
         const [usersResponse, rolesResponse, teamsResponse] = await Promise.all([
-          apiService.get(apiEndpoint),
+          apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
           apiService.get(`${apiEndpoint}/roles`),
           apiService.get(apiTeamEndpoint),
           new Promise(resolve => setTimeout(resolve, 1500))
         ]);
 
-        setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : [])
+        setUsers(Array.isArray(usersResponse.data.users) ? usersResponse.data.users : [])
+        setTotalUsersPage(Math.ceil(usersResponse.data.total / 5))
         setUsersRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : [])
         setTeams(Array.isArray(teamsResponse.data) ? teamsResponse.data : [])
       } catch (error) {
@@ -76,7 +83,7 @@ export default function UsersTable() {
     }
 
     fetchUsers()
-  }, [])
+  }, []);
 
   const handleUserSelect = (user: User) => {
     setSelectedUser({ ...user })
@@ -162,6 +169,13 @@ export default function UsersTable() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const rolesColors: { [key in any]: string } = {
+    "Admin": "bg-red-100 text-red-800",
+    "Lider": "bg-blue-100 text-blue-800",
+    "Liderado": "bg-green-100 text-green-800",
+    "Líder e Liderado": "bg-orange-100 text-orange-800",
   }
 
   return (
@@ -319,10 +333,7 @@ export default function UsersTable() {
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.team.name}</TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                            ${user.role === 'Admin' ? 'bg-green-100 text-green-800' :
-                              user.role === 'Lider' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'}`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${rolesColors[user.role]}`}>
                             {user.role}
                           </span>
                         </TableCell>
@@ -437,17 +448,7 @@ export default function UsersTable() {
             ) : (
               <NotFound name='Nenhum usuário encontrado.'/>
             )}
-            <div className="flex justify-between mt-auto pt-4 border-t">
-              <Button variant="outline" disabled size="sm">
-                <ChevronLeft className="mr-2  h-4 w-4" />
-                Anterior
-              </Button>
-              <span>Página 1 de 1</span>
-              <Button variant="outline" disabled size="sm">
-                Próximo
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
+            <Pagination name="usuarios" filterPage={filterPage} totalUsersPage={totalUsersPage} />
           </>
         )}
         <Dialog open={updateIsOpen} onOpenChange={setUpdateIsOpen}>
