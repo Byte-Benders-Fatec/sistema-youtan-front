@@ -55,7 +55,7 @@ export default function UsersTable() {
   const [addIsOpen, setAddIsOpen] = useState(false)
   const [updateIsOpen, setUpdateIsOpen] = useState(false)
   const [filterPage, setFilterPage] = useState(page)
-  const [totalUsersPage, setTotalUsersPage] = useState(0)
+  const [totalUsersPage, setTotalUsersPage] = useState(1)
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -69,7 +69,7 @@ export default function UsersTable() {
         ]);
 
         setUsers(Array.isArray(usersResponse.data.users) ? usersResponse.data.users : [])
-        setTotalUsersPage(Math.ceil(usersResponse.data.total / 5))
+        setTotalUsersPage(usersResponse.data.total? Math.ceil(usersResponse.data.total / 5) : 1)
         setUsersRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : [])
         setTeams(Array.isArray(teamsResponse.data) ? teamsResponse.data : [])
       } catch (error) {
