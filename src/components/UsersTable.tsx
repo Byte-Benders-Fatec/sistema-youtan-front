@@ -173,7 +173,7 @@ export default function UsersTable() {
 
   const rolesColors: { [key in any]: string } = {
     "Admin": "bg-red-100 text-red-800",
-    "Lider": "bg-blue-100 text-blue-800",
+    "Líder": "bg-blue-100 text-blue-800",
     "Liderado": "bg-green-100 text-green-800",
     "Líder e Liderado": "bg-orange-100 text-orange-800",
   }
