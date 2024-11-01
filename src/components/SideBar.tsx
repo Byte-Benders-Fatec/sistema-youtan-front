@@ -14,7 +14,7 @@ const SideBarLayout = () => {
     const apiEndpoint = "public/auth/logout";
 
     apiService.get(apiEndpoint)
-    localStorage.setItem("is-auth", "false");
+    localStorage.removeItem("is-auth");
     window.location.href = "/login"
   }
   return (
