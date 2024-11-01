@@ -34,7 +34,7 @@ class ApiService {
     const config = {
       method,
       url: `${this.baseUrl}/${url}`,
-      withCredentials: false,
+      withCredentials: true,
       headers: this.headers,
       data,
       params
@@ -50,7 +50,6 @@ if(import.meta.env.VITE_SKIP_AUTH !== 'true' || import.meta.env.VITE_SKIP_AUTH !
     (error) => {
       if (error.response.status === HttpStatus.UNAUTHORIZED) {
         localStorage.removeItem('is-auth')
-        localStorage.removeItem('is-admin')
       }
       return Promise.reject(error)
     }

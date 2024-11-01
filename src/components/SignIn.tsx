@@ -115,7 +115,7 @@ export default function SignIn() {
       const response = (await apiService.post(apiEndpoint, data)).data;
       
       setTimeout(() => {
-        localStorage.setItem("is-auth", "true");
+        localStorage.setItem("is-auth", response.role);
         navigate('/dashboard');
       }, 1000)
     } catch (error: any) {
