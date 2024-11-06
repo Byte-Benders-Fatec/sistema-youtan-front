@@ -28,13 +28,19 @@ import {
 } from "lucide-react"
 import ApiService from '@/services/ApiService'
 import {Team} from '@/types/User'
+import { useSearchParams  } from 'react-router-dom'
 import { DialogDescription } from '@radix-ui/react-dialog';
 
 import NotFound from './NotFound'
 
+import Pagination from './Pagination'
+
+
 const TeamsTable = () => {
     const apiService = new ApiService();
     const apiEndpoint = "private/teams"
+    const [searchParams] = useSearchParams();
+    const page = Number(searchParams.get('page')) || 1;
 
     const [teams, setTeams] = useState<Team[]>([]);
     const [searchTerm, setSearchTerm] = useState('')
@@ -45,6 +51,9 @@ const TeamsTable = () => {
     const [updateIsOpen, setUpdateIsOpen] = useState(false);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [teamAddError, setTeamAddError] = useState("")
+    const [filterPage, setFilterPage] = useState(page)
+    const [totalTeamsPage, setTotalTeamsPage] = useState(1)
+    
 
     useEffect(() => {
         const fetchTeams = async () => {
@@ -52,10 +61,12 @@ const TeamsTable = () => {
             try {
               const [teamsResponse] = await Promise.all([
                 apiService.get(apiEndpoint),
+                apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
                 new Promise(resolve => setTimeout(resolve, 1500))
               ]);
 
-              setTeams(Array.isArray(teamsResponse.data) ? teamsResponse.data : []);
+              setTeams(Array.isArray(teamsResponse.data.teams) ? teamsResponse.data.teams : []);
+              setTotalTeamsPage(teamsResponse.data.total? Math.ceil(teamsResponse.data.total / 5) : 1)
             } catch (error) {
                 console.error('Error fetching teams:', error);
                 setTeams([]);
@@ -351,6 +362,7 @@ const TeamsTable = () => {
 
         </Table>
         ): (<NotFound name='Nenhum time encontrado.'/>)}
+        <Pagination name="usuarios" filterPage={filterPage} totalUsersPage={totalTeamsPage} />
         <div className="flex justify-between mt-auto pt-4 border-t">
           <Button variant="outline" disabled size="sm">
             <ChevronLeft className="mr-2 h-4 w-4" />

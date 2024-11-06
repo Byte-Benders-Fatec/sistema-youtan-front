@@ -41,6 +41,12 @@ import {
 } from "@/components/ui/select"
 
 import { useParams } from 'react-router-dom';
+import { useSearchParams  } from 'react-router-dom'
+
+
+
+import Pagination from './Pagination'
+
 
 const QuestionsTable = () => {
     const { id } = useParams(); 
@@ -48,6 +54,8 @@ const QuestionsTable = () => {
     const apiService = new ApiService();
     const apiEndpoint = "private/questions"
     const apiFormsEndpoint = "private/forms"
+    const [searchParams] = useSearchParams();
+    const page = Number(searchParams.get('page')) || 1;
 
     const [questions, setQuestions] = useState<Question[]>([]);
     const [questionTypes, setQuestionTypes] = useState<string[]>([]);
@@ -59,17 +67,21 @@ const QuestionsTable = () => {
     const [updateIsOpen, setUpdateIsOpen] = useState(false);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [questionAddError, setQuestionAddError] = useState("");
+    const [filterPage, setFilterPage] = useState(page)
+    const [totalQuestionsPage, setTotalQuestionsPage] = useState(1)
 
     useEffect(() => {
       const fetchForms = async () => {
         try {
           const [questionsResponse, types] = await Promise.all([
             apiService.get(`${apiFormsEndpoint}/${id}`),
+            apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
             apiService.get(`${apiEndpoint}/types`),
             new Promise(resolve => setTimeout(resolve, 1500))
           ]);
 
           setQuestions(Array.isArray(questionsResponse.data.questions) ? questionsResponse.data.questions : []);
+          setTotalQuestionsPage(questionsResponse.data.total? Math.ceil(questionsResponse.data.total / 5) : 1)
           setQuestionTypes(Array.isArray(types.data) ? types.data : []);
         } catch (error) {
           console.error('Error fetching questions:', error);
@@ -511,7 +523,7 @@ const QuestionsTable = () => {
 
           </Table>
           ): (<NotFound name='Nenhuma questão encontrada.'/>)}
-          
+          <Pagination name="usuarios" filterPage={filterPage} totalUsersPage={totalQuestionsPage} />
           <div className="flex justify-between mt-auto pt-4 border-t">
             <Button variant="outline" disabled size="sm">
               <ChevronLeft className="mr-2 h-4 w-4" />

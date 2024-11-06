@@ -27,6 +27,7 @@ import {
   ChevronRight,
 } from "lucide-react"
 import {Form} from '@/types/User'
+import { useSearchParams  } from 'react-router-dom'
 import ApiService from '@/services/ApiService'
 import { DialogDescription } from '@radix-ui/react-dialog';
 
@@ -40,10 +41,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Link } from 'react-router-dom'
+import Pagination from './Pagination'
+
 
 const FormsTable = () => {
     const apiService = new ApiService();
     const apiEndpoint = "private/forms"
+    const [searchParams] = useSearchParams();
+    const page = Number(searchParams.get('page')) || 1;
     
     const [forms, setForms] = useState<Form[]>([]);
     const [formCategories, setFormCategories] = useState<string[]>([]);
@@ -55,6 +60,8 @@ const FormsTable = () => {
     const [updateIsOpen, setUpdateIsOpen] = useState(false);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [userFormError, setUserFormError] = useState("")
+    const [filterPage, setFilterPage] = useState(page)
+    const [totalFormsPage, setTotalFormsPage] = useState(1)
 
 
     useEffect(() => {
@@ -62,11 +69,13 @@ const FormsTable = () => {
             try {
                 const [formsResponse, categoriesResponse] = await Promise.all([
                   apiService.get(apiEndpoint),
+                  apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
                   apiService.get(`${apiEndpoint}/categories`),
                   new Promise(resolve => setTimeout(resolve, 1500))
                 ])
 
-                setForms(Array.isArray(formsResponse.data) ? formsResponse.data : []);
+                setForms(Array.isArray(formsResponse.data.forms) ? formsResponse.data.forms : []);
+                setTotalFormsPage(formsResponse.data.total? Math.ceil(formsResponse.data.total / 5) : 1)
                 setFormCategories(Array.isArray(categoriesResponse.data) ? categoriesResponse.data : []);
             } catch (error) {
               console.error('Erro ao buscar formulários:', error);
@@ -389,6 +398,7 @@ const FormsTable = () => {
 
           </Table>
           ): (<NotFound name='Nenhum formulário encontrado.'/>)}
+          <Pagination name="usuarios" filterPage={filterPage} totalUsersPage={totalFormsPage} />
           <div className="flex justify-between mt-auto pt-4 border-t">
             <Button variant="outline" disabled size="sm">
               <ChevronLeft className="mr-2 h-4 w-4" />
