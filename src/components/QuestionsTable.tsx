@@ -74,8 +74,7 @@ const QuestionsTable = () => {
       const fetchForms = async () => {
         try {
           const [questionsResponse, types] = await Promise.all([
-            apiService.get(`${apiFormsEndpoint}/${id}`),
-            apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
+            apiService.get(`${apiEndpoint}/${id}`, {"take": 5, "page": page}),
             apiService.get(`${apiEndpoint}/types`),
             new Promise(resolve => setTimeout(resolve, 1500))
           ]);
@@ -523,7 +522,7 @@ const QuestionsTable = () => {
 
           </Table>
           ): (<NotFound name='Nenhuma questão encontrada.'/>)}
-          <Pagination name="questoes" filterPage={filterPage} totalUsersPage={totalQuestionsPage} />
+          <Pagination name={`formularios/${id}`} filterPage={filterPage} totalUsersPage={totalQuestionsPage} />
           </>
         )}
       </CardContent>

@@ -60,7 +60,6 @@ const TeamsTable = () => {
           setIsInitialLoading(true);
             try {
               const [teamsResponse] = await Promise.all([
-                apiService.get(apiEndpoint),
                 apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
                 new Promise(resolve => setTimeout(resolve, 1500))
               ]);

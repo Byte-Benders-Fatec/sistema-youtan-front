@@ -68,7 +68,6 @@ const FormsTable = () => {
         const fetchForms = async () => {
             try {
                 const [formsResponse, categoriesResponse] = await Promise.all([
-                  apiService.get(apiEndpoint),
                   apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
                   apiService.get(`${apiEndpoint}/categories`),
                   new Promise(resolve => setTimeout(resolve, 1500))
