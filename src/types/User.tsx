@@ -20,7 +20,7 @@ interface Form {
 interface Question {
     id: number;
     title: string;
-    alternatives: string;
+    alternatives: string[];
     type: string;
     form: Form;
 }

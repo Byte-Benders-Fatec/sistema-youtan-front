@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import { LoaderCircle, Pen, Plus, X } from "lucide-react"
+import { LoaderCircle, Pen, Plus, Trash2Icon, X } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -52,8 +52,8 @@ const QuestionsTable = () => {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [questionTypes, setQuestionTypes] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('')
-    const [newQuestion, setNewQuestion] = useState({ id: 0, title: '', alternatives: "", type: "", form: id})
-    const [selectedQuestion, setSelectedQuestion] = useState({ id: 0, title: '', alternatives: "", type: "", form: id})
+    const [newQuestion, setNewQuestion] = useState({ id: 0, title: '', alternatives: [""], type: "", form: id})
+    const [selectedQuestion, setSelectedQuestion] = useState({ id: 0, title: '', alternatives: [""], type: "", form: id})
     const [isLoading, setIsLoading] = useState(false);
     const [addIsOpen, setAddIsOpen] = useState(false);
     const [updateIsOpen, setUpdateIsOpen] = useState(false);
@@ -69,7 +69,7 @@ const QuestionsTable = () => {
             new Promise(resolve => setTimeout(resolve, 1500))
           ]);
 
-          setQuestions(Array.isArray(questionsResponse.data) ? questionsResponse.data : []);
+          setQuestions(Array.isArray(questionsResponse.data.questions) ? questionsResponse.data.questions : []);
           setQuestionTypes(Array.isArray(types.data) ? types.data : []);
         } catch (error) {
           console.error('Error fetching questions:', error);
@@ -87,7 +87,7 @@ const QuestionsTable = () => {
       if (selectedQuestion.type === "Texto Longo") {
         setSelectedQuestion((prev) => ({
           ...prev,
-          alternatives: "",
+          alternatives: [""]
         }));
       }
     }, [selectedQuestion.type]);
@@ -100,9 +100,45 @@ const QuestionsTable = () => {
     };
 
     const filteredForms = questions.length > 0 ? questions.filter(question =>
-      [question.id.toString(), question.type, question.alternatives, question.title]
+      [question.id.toString(), question.type, question.alternatives.toString(), question.title]
       .some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
     ): [];
+
+  const handleAddAlternative = () => {
+    setNewQuestion({
+        ...newQuestion,
+        alternatives: [...newQuestion.alternatives, ""]
+    });
+  };
+
+  const handleAlternativeChange = (index: number, value: string) => {
+    const updatedAlternatives = [...newQuestion.alternatives];
+    updatedAlternatives[index] = value;
+    setNewQuestion({ ...newQuestion, alternatives: updatedAlternatives });
+  };
+
+  const handleRemoveAlternative = (index: number) => {
+    const updatedAlternatives = newQuestion.alternatives.filter((_, i) => i !== index);
+    setNewQuestion({ ...newQuestion, alternatives: updatedAlternatives });
+  };
+
+  const handleAddUpdatedAlternative = () => {
+    setSelectedQuestion({
+        ...selectedQuestion,
+        alternatives: [...selectedQuestion.alternatives, ""]
+    });
+  };
+
+  const handleUpdatedAlternativeChange = (index: number, value: string) => {
+    const updatedAlternatives = [...selectedQuestion.alternatives];
+    updatedAlternatives[index] = value;
+    setSelectedQuestion({ ...selectedQuestion, alternatives: updatedAlternatives });
+  };
+
+  const handleUpdatedRemoveAlternative = (index: number) => {
+    const updatedAlternatives = selectedQuestion.alternatives.filter((_, i) => i !== index);
+    setSelectedQuestion({ ...selectedQuestion, alternatives: updatedAlternatives });
+  };
 
     const handleAddQuestion = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -119,7 +155,7 @@ const QuestionsTable = () => {
 
       setQuestions(prevQuestions => Array.isArray(prevQuestions) ? [...prevQuestions, response.data] : [response.data])
       setAddIsOpen(false);
-      setNewQuestion({id: 0, title: "", alternatives: "", type: "", form: id})
+      setNewQuestion({id: 0, title: "", alternatives: [""], type: "", form: id})
       } catch (error: any) {
         setQuestionAddError(error.message || "An error occurred. Please try again.")
       } finally {
@@ -205,7 +241,7 @@ const QuestionsTable = () => {
             <div className="flex gap-2">
               <Dialog open={addIsOpen} onOpenChange={setAddIsOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="default">
+                  <Button variant="default" disabled={questions.length >= 20}>
                       <Plus /> Adicionar
                   </Button>
                 </DialogTrigger>
@@ -244,13 +280,28 @@ const QuestionsTable = () => {
 
                       {newQuestion.type !== "Texto Longo" && newQuestion.type !== "" &&
                         <div>
-                          <Label htmlFor="alternatives">Alternativas</Label>
-                          <Input
-                          id="alternatives"
-                          value={newQuestion.alternatives}
-                          onChange={(e) => setNewQuestion({...newQuestion, alternatives: e.target.value})}
-                          required
-                          />
+                          <div className='flex items-center justify-between text-center'>
+                            <Label htmlFor="alternatives">Alternativas </Label>
+                            <Button onClick={handleAddAlternative} variant="ghost" className='p-1 opacity-70' disabled={newQuestion.alternatives.length >= 5} >
+                              <Plus />
+                            </Button>
+                            
+                          </div>
+
+                        {newQuestion.alternatives.map((alternative, index) => (
+                          <div className='flex mb-3' key={index}>
+                            <Input
+                              id={`alternative-${index}`}
+                              placeholder={`Alternativa ${index+1}`}
+                              value={alternative}
+                              onChange={(e) => handleAlternativeChange(index, e.target.value)}
+                              required
+                            />
+                            <Button type="button" onClick={() => {handleRemoveAlternative(index)}} variant="ghost" className='p-1 opacity-70' disabled={newQuestion.alternatives.length == 1}>
+                              <Trash2Icon  />
+                            </Button>
+                          </div>
+                        ))}
                         </div>
                       }
 
@@ -304,7 +355,7 @@ const QuestionsTable = () => {
                   <TableCell>{question.id}</TableCell>
                   <TableCell className="font-medium">{question.type}</TableCell>
                   <TableCell className="font-medium">{question.title}</TableCell>
-                  <TableCell className="font-medium">{question.alternatives}</TableCell>
+                  <TableCell className="font-medium">{question.alternatives.join(", ")}</TableCell>
 
                   <TableCell>
                       <div className='flex gap-1'>
@@ -414,15 +465,31 @@ const QuestionsTable = () => {
                       </div>
 
                       {selectedQuestion.type !== "Texto Longo" && selectedQuestion.type !== "" &&
-                      <div>
-                        <Label htmlFor="alternatives">Alternativas</Label>
-                        <Input
-                        id="alternatives"
-                        value={selectedQuestion.alternatives}
-                        onChange={(e) => setSelectedQuestion({...selectedQuestion, alternatives: e.target.value})}
-                        required
-                        />
-                      </div>}
+                        <div>
+                          <div className='flex items-center justify-between text-center'>
+                            <Label htmlFor="alternatives">Alternativas </Label>
+                            <Button onClick={handleAddUpdatedAlternative} variant="ghost" className='p-1 opacity-70' disabled={selectedQuestion.alternatives.length >= 5} >
+                              <Plus />
+                            </Button>
+                            
+                          </div>
+
+                        {selectedQuestion.alternatives.map((alternative, index) => (
+                          <div className='flex mb-3' key={index}>
+                            <Input
+                              id={`alternative-${index}`}
+                              placeholder={`Alternativa ${index+1}`}
+                              value={alternative}
+                              onChange={(e) => handleUpdatedAlternativeChange(index, e.target.value)}
+                              required
+                            />
+                            <Button type="button" onClick={() => handleUpdatedRemoveAlternative(index)} variant="ghost" className='p-1 opacity-70' disabled={selectedQuestion.alternatives.length == 1}>
+                              <Trash2Icon  />
+                            </Button>
+                          </div>
+                        ))}
+                        </div>
+                      }
 
           
                       <div className='flex justify-end gap-1'>
