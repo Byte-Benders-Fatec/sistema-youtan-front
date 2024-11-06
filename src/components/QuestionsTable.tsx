@@ -523,18 +523,7 @@ const QuestionsTable = () => {
 
           </Table>
           ): (<NotFound name='Nenhuma questão encontrada.'/>)}
-          <Pagination name="usuarios" filterPage={filterPage} totalUsersPage={totalQuestionsPage} />
-          <div className="flex justify-between mt-auto pt-4 border-t">
-            <Button variant="outline" disabled size="sm">
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Anterior
-            </Button>
-            <span>Página 1 de 1</span>
-            <Button variant="outline" disabled size="sm">
-              Próximo
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+          <Pagination name="questoes" filterPage={filterPage} totalUsersPage={totalQuestionsPage} />
           </>
         )}
       </CardContent>
