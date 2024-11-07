@@ -25,4 +25,11 @@ interface Question {
     form: Form;
 }
 
-export type { User, Team, Form, Question };
+interface Answer {
+    id: number;
+    userAnswers: string[];
+    user: User;
+    form: Form;
+}
+
+export type { User, Team, Form, Question, Answer };

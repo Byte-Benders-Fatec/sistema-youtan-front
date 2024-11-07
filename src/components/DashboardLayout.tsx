@@ -1,15 +1,9 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import SideBarLayout from './SideBar'
 
 const DashboardLayout: React.FC = () => {
   return (
-    <div className="flex h-screen bg-gray-100">
-      <SideBarLayout />
-
-      {/* Main content */}
-      <main className="flex-1 p-8 overflow-auto">
-        <Card className="min-h-[70vh] flex flex-col mb-8">
+        <Card className="flex flex-col mb-8">
           <CardHeader>
             <CardTitle>Relatório Geral</CardTitle>
           </CardHeader>
@@ -31,9 +25,6 @@ const DashboardLayout: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
-      </main>
-    </div>
   )
 }
 

@@ -3,12 +3,12 @@ import ReactDOM from 'react-dom/client';
 import './App.css';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import Login from "./routes/Login";
-import DashboardLayout from './components/DashboardLayout';
 import Users from './routes/Users';
 import TeamsPage from './pages/Teams';
 import FormsPage from './pages/Forms';
 import QuestionsPage from './pages/Questions';
 import UsersTable from './components/UsersTable';
+import DashboardsPage from './pages/Dashboards';
 
 const router = createBrowserRouter([
   {
@@ -17,7 +17,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: <DashboardLayout />,
+    element: <DashboardsPage />,
   },
   {
     path: "/usuarios",
