@@ -71,7 +71,7 @@ export default function UsersTable() {
         setUsers(Array.isArray(usersResponse.data.users) ? usersResponse.data.users : [])
         setTotalUsersPage(usersResponse.data.total? Math.ceil(usersResponse.data.total / 5) : 1)
         setUsersRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : [])
-        setTeams(Array.isArray(teamsResponse.data) ? teamsResponse.data : [])
+        setTeams(Array.isArray(teamsResponse.data.teams) ? teamsResponse.data.teams : [])
       } catch (error) {
         console.error('Error fetching data:', error)
         setUsers([])
