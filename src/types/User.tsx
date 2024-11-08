@@ -30,6 +30,7 @@ interface Answer {
     userAnswers: string[];
     user: User;
     form: Form;
+    userHasAnswered: boolean;
 }
 
 export type { User, Team, Form, Question, Answer };

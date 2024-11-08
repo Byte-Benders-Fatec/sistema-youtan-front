@@ -58,12 +58,12 @@ const AnswersTable = () => {
           setIsInitialLoading(true);
             try {
               const [answersResponse] = await Promise.all([
-                apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
+                apiService.get(`${apiEndpoint}`, {"take": 10, "page": page}),
                 new Promise(resolve => setTimeout(resolve, 1500))
               ]);
 
               setAnswers(Array.isArray(answersResponse.data.answers) ? answersResponse.data.answers : []);
-              setTotalAnswersPage(answersResponse.data.total? Math.ceil(answersResponse.data.total / 5) : 1)
+              setTotalAnswersPage(answersResponse.data.total? Math.ceil(answersResponse.data.total / 10) : 1)
             } catch (error) {
                 console.error('Error fetching answers:', error);
                 setAnswers([]);
@@ -80,7 +80,7 @@ const AnswersTable = () => {
     };
 
     const filteredAnswers = answers.length > 0 ? answers.filter(answer =>
-    [answer.id.toString(), answer.user.name, answer.form.category].some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
+    [answer.id.toString(), answer.user.name, answer.user.team.name, answer.form.category, answer.userAnswers?.toString()].some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
     ): [];
 
     const handleAddAnswer = async (e: React.FormEvent) => {
@@ -128,7 +128,7 @@ const AnswersTable = () => {
         )
         setUpdateIsOpen(false);
       } catch (error: any) {
-          console.error("Erro ao adicionar time! Tente novamente...");
+          console.error("Erro ao adicionar resposta! Tente novamente...");
       } finally {
         setIsLoading(false);
       }
@@ -153,7 +153,7 @@ const AnswersTable = () => {
             : []
         )
       } catch (error: any) {
-        console.log("Erro ao excluir time! Tente novamente...");
+        console.log("Erro ao excluir resposta! Tente novamente...");
         
       } finally {
         setIsLoading(false);
@@ -246,6 +246,7 @@ const AnswersTable = () => {
                 <TableHead>Time</TableHead>
                 <TableHead>Formulário</TableHead>
                 <TableHead>Perguntas e Respostas</TableHead>
+                <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -256,6 +257,11 @@ const AnswersTable = () => {
                 <TableCell className="font-medium">{answer.user.team.name}</TableCell>
                 <TableCell className="font-medium">{answer.form.category}</TableCell>
                 <TableCell className="font-medium">{answer.userAnswers}</TableCell>
+                <TableCell className="font-medium">
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${answer.userHasAnswered? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                    {answer.userHasAnswered? "Respondido" : "Não Respondido"}
+                  </span>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -263,7 +269,7 @@ const AnswersTable = () => {
           <Dialog open={updateIsOpen} onOpenChange={setUpdateIsOpen}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Atualizar Time</DialogTitle>
+                    <DialogTitle>Atualizar Resposta</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleUpdateAnswer} className="space-y-4">
                     <div>
@@ -305,10 +311,9 @@ const AnswersTable = () => {
           </Dialog>
 
         </Table>
-        ): (<NotFound name='Nenhum time encontrado.'/>)}
-        <Pagination name="times" filterPage={filterPage} totalUsersPage={totalAnswersPage} />
-      
-        </>
+        ): (<NotFound name='Nenhuma resposta de formulário encontrada.'/>)}
+          <Pagination name="dashboard" filterPage={filterPage} totalUsersPage={totalAnswersPage} />
+          </>
       )}
       </CardContent>
     </Card>
