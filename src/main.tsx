@@ -9,6 +9,9 @@ import FormsPage from './pages/Forms';
 import QuestionsPage from './pages/Questions';
 import UsersTable from './components/UsersTable';
 import DashboardsPage from './pages/Dashboards';
+import Notification from './components/Notifications';
+import FormsToAnswerTable from './components/FormsToAnswerTable';
+import FormsTable from './components/FormsTable';
 
 const router = createBrowserRouter([
   {
@@ -45,14 +48,22 @@ const router = createBrowserRouter([
       {
         path: ":id",
         element: <QuestionsPage />
+      },
+      {
+        path: "",
+        element: <FormsTable />
+      },
+      {
+        path: "responder",
+        element: <FormsToAnswerTable />
       }
-    ]
+    ],
   },
 
 ]);
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>,
+    <React.StrictMode>
+      <RouterProvider router={router} />
+    </React.StrictMode>
 )

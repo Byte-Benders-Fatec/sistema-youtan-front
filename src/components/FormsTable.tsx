@@ -53,8 +53,8 @@ const FormsTable = () => {
     const [forms, setForms] = useState<Form[]>([]);
     const [formCategories, setFormCategories] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('')
-    const [newForm, setNewForm] = useState({ id: 0, category: ''})
-    const [selectedForm, setSelectedForm] = useState({  id: 0, category: ''})
+    const [newForm, setNewForm] = useState({ id: 0, name: "", category: ''})
+    const [selectedForm, setSelectedForm] = useState({  id: 0, name: "", category: ''})
     const [isLoading, setIsLoading] = useState(false);
     const [addIsOpen, setAddIsOpen] = useState(false);
     const [updateIsOpen, setUpdateIsOpen] = useState(false);
@@ -88,13 +88,21 @@ const FormsTable = () => {
         fetchForms();
     }, []);
 
-    const handleFormSelect = (form: Form) => {
-        setSelectedForm({ ...form })};
+    const formatDate = (dataTimestamp: Date) => {
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }).format(new Date(dataTimestamp));
+    }
 
     const filteredForms = forms.length > 0 ? forms.filter(form =>
-        [form.id.toString(), form.category]
+        [form.id.toString(), form.name, form.category, formatDate(form.createdAt)]
         .some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
     ): [];
+
+    const handleFormSelect = (form: Form) => {
+      setSelectedForm({ ...form })};
 
     const handleAddForm = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -111,7 +119,7 @@ const FormsTable = () => {
 
       setForms(prevForms => Array.isArray(prevForms) ? [...prevForms, response.data] : [response.data])
       setAddIsOpen(false);
-      setNewForm({ id: 0, category: ""});
+      setNewForm({ id: 0, name: "", category: ""});
       } catch (error: any) {
         setUserFormError(error.message || "Ocorreu um erro! Tente novamente...");
       } finally {
@@ -208,6 +216,16 @@ const FormsTable = () => {
                   </DialogHeader>
                   <form onSubmit={handleAddForm} className="space-y-4">
                   <div>
+                    <Label htmlFor="name">Nome do Formulário</Label>
+                      <Input
+                        id="name"
+                        value={newForm.name}
+                        onChange={(e) => setNewForm({...newForm, name: e.target.value})}
+                        required
+                      />
+                  </div>
+
+                  <div>
                       <Label htmlFor="category">Categoria</Label>
                       <Select
                       onValueChange={(category) => {setNewForm({...newForm, category})}}
@@ -224,7 +242,6 @@ const FormsTable = () => {
                           </SelectContent>
                       </Select>
                     </div>
-
 
                     <div className='flex justify-end gap-1'>
                       <DialogClose asChild>
@@ -263,9 +280,12 @@ const FormsTable = () => {
           <Table>
             <TableHeader>
               <TableRow>
-              <TableHead>ID</TableHead>
+                <TableHead>ID</TableHead>
+                <TableHead>Nome</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Quantidade de perguntas</TableHead>
+                <TableHead>Criado em</TableHead>
+                <TableHead>Disponível até</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -273,9 +293,11 @@ const FormsTable = () => {
               {filteredForms.map((form, idx) => (
                 <TableRow key={idx}>
                   <TableCell>{form.id}</TableCell>
+                  <TableCell className="font-medium">{form.name}</TableCell>
                   <TableCell className="font-medium">{form.category}</TableCell>
-                  <TableCell className="font-medium">{form.questions? form.questions.length : 0} Pergunta(s)</TableCell>
-
+                  <TableCell className="font-medium">{form.questions? form.questions.length : 0} Perguntas</TableCell>
+                  <TableCell className="font-medium">{formatDate(form.createdAt)}</TableCell>
+                  <TableCell className="font-medium">{formatDate(form.createdAt)}</TableCell>
                   <TableCell>
                       <div className='flex gap-1'>
                         <Link to={`/formularios/${form.id}`}>
@@ -360,6 +382,17 @@ const FormsTable = () => {
                       required
                       />
                   </div>
+
+                  <div>
+                    <Label htmlFor="name">Nome do Formulário</Label>
+                      <Input
+                        id="name"
+                        value={selectedForm.name}
+                        onChange={(e) => setSelectedForm({...selectedForm, name: e.target.value})}
+                        required
+                      />
+                  </div>
+
                   <div>
                     <Label htmlFor="category">Categoria</Label>
                     <Select value={selectedForm.category}
