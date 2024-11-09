@@ -13,6 +13,10 @@ interface Team {
 
 interface Form {
     id: number;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date;
     category: string;
     questions: Question[];
 }
