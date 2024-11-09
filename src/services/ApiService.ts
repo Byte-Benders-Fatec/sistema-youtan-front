@@ -7,7 +7,7 @@ class ApiService {
   public headers: Record<string, string>
 
   constructor() {
-    this.baseUrl = "http://localhost:3000/api/v1"
+    this.baseUrl = import.meta.env.VITE_BASE_URL,
     this.headers = {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*'

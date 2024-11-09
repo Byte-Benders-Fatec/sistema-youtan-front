@@ -27,8 +27,6 @@ import {
 import ApiService from '@/services/ApiService'
 import { Answer } from '@/types/User'
 import { useSearchParams  } from 'react-router-dom'
-import { DialogDescription } from '@radix-ui/react-dialog';
-
 import NotFound from './NotFound'
 
 import Pagination from './Pagination'
@@ -39,6 +37,8 @@ const AnswersTable = () => {
     const apiEndpoint = "private/answers"
     const [searchParams] = useSearchParams();
     const page = Number(searchParams.get('page')) || 1;
+    const take = parseInt(import.meta.env.VITE_TABLE_TAKE);
+    const isAdmin = localStorage.getItem("is-auth") === "Admin";
 
     const [answers, setAnswers] = useState<Answer[]>([]);
     const [newAnswer, setNewAnswer] = useState({id: 0, userAnswers: [""], user: 0, form: 0});
@@ -51,19 +51,18 @@ const AnswersTable = () => {
     const [answerAddError, setAnswerAddError] = useState("")
     const [filterPage, setFilterPage] = useState(page)
     const [totalAnswersPage, setTotalAnswersPage] = useState(1)
-    
 
     useEffect(() => {
         const fetchAnswers = async () => {
           setIsInitialLoading(true);
             try {
               const [answersResponse] = await Promise.all([
-                apiService.get(`${apiEndpoint}`, {"take": 10, "page": page}),
+                apiService.get(`${apiEndpoint}`, {"take": take, "page": page}),
                 new Promise(resolve => setTimeout(resolve, 1500))
               ]);
 
               setAnswers(Array.isArray(answersResponse.data.answers) ? answersResponse.data.answers : []);
-              setTotalAnswersPage(answersResponse.data.total? Math.ceil(answersResponse.data.total / 10) : 1)
+              setTotalAnswersPage(answersResponse.data.total? Math.ceil(answersResponse.data.total / take) : 1)
             } catch (error) {
                 console.error('Error fetching answers:', error);
                 setAnswers([]);
@@ -182,51 +181,53 @@ const AnswersTable = () => {
             />
           </div>
           <div className="flex gap-2">
-            <Dialog open={addIsOpen} onOpenChange={setAddIsOpen}>
-              <DialogTrigger asChild>
-                <Button variant="default">
-                    <Plus /> Adicionar
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Adicionar Nova Resposta</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleAddAnswer} className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Nome do Time</Label>
-                    <Input
-                      id="name"
-                      value={newAnswer.userAnswers}
-                      onChange={(e) => setNewAnswer({...newAnswer, userAnswers: e.target.value.split(",")})}
-                      required
-                    />
-                  </div>
+            {isAdmin &&
+              <Dialog open={addIsOpen} onOpenChange={setAddIsOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default">
+                      <Plus /> Adicionar
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Adicionar Nova Resposta</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleAddAnswer} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Nome do Time</Label>
+                      <Input
+                        id="name"
+                        value={newAnswer.userAnswers}
+                        onChange={(e) => setNewAnswer({...newAnswer, userAnswers: e.target.value.split(",")})}
+                        required
+                      />
+                    </div>
 
 
-                  <div className='flex justify-end gap-1'>
-                    <DialogClose asChild>
-                    {isLoading? (<Button disabled type="button" variant="secondary">
-                      Cancelar
-                    </Button>) : (<Button type="button" variant="secondary">
-                      Cancelar
-                    </Button>)}
-                    </DialogClose>
-                    {isLoading ? (
-                      <Button type="submit" disabled>
-                        <LoaderCircle className="animate-spin" />Aguarde
-                      </Button>
-                    ) : (
-                      !newAnswer.userAnswers ? (
-                        <Button type="submit">Adicionar</Button>
+                    <div className='flex justify-end gap-1'>
+                      <DialogClose asChild>
+                      {isLoading? (<Button disabled type="button" variant="secondary">
+                        Cancelar
+                      </Button>) : (<Button type="button" variant="secondary">
+                        Cancelar
+                      </Button>)}
+                      </DialogClose>
+                      {isLoading ? (
+                        <Button type="submit" disabled>
+                          <LoaderCircle className="animate-spin" />Aguarde
+                        </Button>
                       ) : (
-                        <Button disabled type="submit">Adicionar</Button>
-                      )
-                    )}
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                        !newAnswer.userAnswers ? (
+                          <Button type="submit">Adicionar</Button>
+                        ) : (
+                          <Button disabled type="submit">Adicionar</Button>
+                        )
+                      )}
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            }
             <Button variant="outline">
               <Filter className="mr-2 h-4 w-4" />
               Filtrar
@@ -241,18 +242,18 @@ const AnswersTable = () => {
         <Table>
           <TableHeader>
             <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Formulário</TableHead>
-                <TableHead>Perguntas e Respostas</TableHead>
-                <TableHead>Status</TableHead>
+              {isAdmin &&<TableHead>ID</TableHead>}
+              <TableHead>Nome</TableHead>
+              <TableHead>Time</TableHead>
+              <TableHead>Formulário</TableHead>
+              <TableHead>Perguntas e Respostas</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredAnswers.map((answer, idx) => (
               <TableRow key={idx}>
-                <TableCell>{answer.id}</TableCell>
+                {isAdmin &&<TableCell>{answer.id}</TableCell>}
                 <TableCell className="font-medium">{answer.user.name}</TableCell>
                 <TableCell className="font-medium">{answer.user.team.name}</TableCell>
                 <TableCell className="font-medium">{answer.form.category}</TableCell>

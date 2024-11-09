@@ -41,6 +41,7 @@ const TeamsTable = () => {
     const apiEndpoint = "private/teams"
     const [searchParams] = useSearchParams();
     const page = Number(searchParams.get('page')) || 1;
+    const take = parseInt(import.meta.env.VITE_TABLE_TAKE);
 
     const [teams, setTeams] = useState<Team[]>([]);
     const [searchTerm, setSearchTerm] = useState('')
@@ -60,12 +61,12 @@ const TeamsTable = () => {
           setIsInitialLoading(true);
             try {
               const [teamsResponse] = await Promise.all([
-                apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
+                apiService.get(`${apiEndpoint}`, {"take": take, "page": page}),
                 new Promise(resolve => setTimeout(resolve, 1500))
               ]);
 
               setTeams(Array.isArray(teamsResponse.data.teams) ? teamsResponse.data.teams : []);
-              setTotalTeamsPage(teamsResponse.data.total? Math.ceil(teamsResponse.data.total / 5) : 1)
+              setTotalTeamsPage(teamsResponse.data.total? Math.ceil(teamsResponse.data.total / take) : 1)
             } catch (error) {
                 console.error('Error fetching teams:', error);
                 setTeams([]);

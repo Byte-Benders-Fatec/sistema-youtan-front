@@ -25,6 +25,7 @@
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "dotenv-safe": "^9.1.0",
     "email-service-frontend": "file:",
     "flowbite-react": "^0.10.2",
     "framer-motion": "^10.12.4",
@@ -38,6 +39,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/dotenv-safe": "^8.1.6",
     "@types/node": "^22.7.5",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
