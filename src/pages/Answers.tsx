@@ -1,8 +1,5 @@
-import FormsTable from "@/components/FormsTable";
 import SideBarLayout from "@/components/SideBar";
 import UserAnswersTable from "@/components/UserAnswersTable";
-import { Outlet, useLocation  } from "react-router-dom";
-
 
 const AnswersPage = () => {
     return (

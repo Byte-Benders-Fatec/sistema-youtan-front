@@ -31,6 +31,7 @@ import NotFound from './NotFound'
 
 import Pagination from './Pagination'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { ScrollArea } from './ui/scroll-area'
 
 
 const AnswersTable = () => {
