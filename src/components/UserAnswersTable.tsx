@@ -7,24 +7,27 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoaderCircle } from "lucide-react";
 import { Input } from "./ui/input";
+import { Form } from "@/types/User";
 
 const UserAnswersForm = () => {
-  const { formId } = useParams(); 
+  const { formId, answerId } = useParams(); 
   const apiService = new ApiService();
-  const apiEndpoint = "private/forms";
-  const apiEndpointAnswers = "private/answers"
+  const apiEndpoint = "private/answers"
   const [questions, setQuestions] = useState<any[]>([]);
-  const [answers, setAnswer] = useState<any[]>([]);
-  const [userFormError, setUserAnswerError] = useState("")
+  const [answer, setAnswer] = useState<Form>();
   const [isLoading, setIsLoading] = useState(false);
-  const [newAnswer, setNewAnswer] = useState({ id: 0, userAnswers: "", userId: 0, formID:0})
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [multiSelectAnswers, setMultiSelectAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function fetchForm() {
       try {
-        const formsResponse = await apiService.get(`${apiEndpointAnswers}/formToAnswer/${formId}`);
+        const [formsResponse] = await Promise.all([
+          apiService.get(`${apiEndpoint}/formToAnswer/${formId}`),
+          new Promise(resolve => setTimeout(resolve, 1500))
+        ]);
+
+        setAnswer(formsResponse.data);
         setQuestions(formsResponse.data.questions || []);
       } catch (error) {
         console.error("Error fetching form data", error);
@@ -36,9 +39,7 @@ const UserAnswersForm = () => {
     fetchForm();
   }, [formId]);
 
-  const { register, handleSubmit, setValue,getValues, formState: { errors } } = useForm();
-  
-  
+  const { register, setValue,getValues, formState: { errors } } = useForm();
 
   const handleCheckboxChange = (questionId: string, value: string) => {
     setMultiSelectAnswers((prev) => {
@@ -50,7 +51,7 @@ const UserAnswersForm = () => {
         : [...selectedValues, value];
       
       const concatenatedValues = updatedValues.join(", ");
-      setValue(questionId, concatenatedValues); // Set the value in react-hook-form
+      setValue(questionId, concatenatedValues);
       return { ...prev, [questionId]: concatenatedValues };
     });
   };
@@ -61,23 +62,17 @@ const UserAnswersForm = () => {
     setIsLoading(true);
 
     try {
-      const formAnswers = getValues();
-      const answersArray = Object.values(formAnswers);
+      const formAnswers = Object.values(getValues());
       const [response] = await Promise.all([
-        apiService.put(`${apiEndpointAnswers}/1`, {userAnswers: answersArray.join(", "), userHasAnswered: true}),
+        apiService.put(`${apiEndpoint}/${answerId}`, {userAnswers: formAnswers.join(", "), userHasAnswered: true}),
         new Promise(resolve => setTimeout(resolve, 1500))
       ]);
 
       if (response.data.error) {
         throw new Error(response.data.error)
       }
-
-      setAnswer(prevAwnser => 
-        Array.isArray(prevAwnser) 
-          ? prevAwnser.map(answers => answers.id === 1 ? response.data : answers)
-          : [response.data]
-      );
-      window.location.href = "/formularios/responder"
+      
+      window.location.href = "/dashboard"
     } catch (error: any) {
         console.error("Erro ao adicionar formulário! Tente novamente...");
     } finally {
@@ -89,7 +84,7 @@ const UserAnswersForm = () => {
   return (
     <Card className='min-h-[70vh] flex flex-col'>
       <CardHeader>
-        <CardTitle className='text-2xl'>Usuários</CardTitle>
+        {answer && <CardTitle className='text-4xl'>{answer.name} - {answer.category}</CardTitle>}
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         {isInitialLoading ? (
@@ -118,7 +113,7 @@ const UserAnswersForm = () => {
                           id={`${String(question.id)}-${alternative}`}
                           value={alternative}
                           {...(question.type === "Múltipla Escolha"
-                            ? {} // Unregister from react-hook-form directly, using custom handler
+                            ? {}
                             : register(String(question.id), { required: "Seleção obrigatória" })
                           )}
                           onChange={() =>

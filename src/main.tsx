@@ -9,7 +9,6 @@ import FormsPage from './pages/Forms';
 import QuestionsPage from './pages/Questions';
 import UsersTable from './components/UsersTable';
 import DashboardsPage from './pages/Dashboards';
-import Notification from './components/Notifications';
 import FormsToAnswerTable from './components/FormsToAnswerTable';
 import FormsTable from './components/FormsTable';
 import AnswersPage from './pages/Answers';
@@ -70,7 +69,7 @@ const router = createBrowserRouter([
   },
 
   {
-    path: "forms/:formId/respostas/:answersId",
+    path: "forms/:formId/respostas/:answerId",
     element: <AnswersPage/>,
   },
 
