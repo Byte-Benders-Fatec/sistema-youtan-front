@@ -29,7 +29,7 @@ const FormsToAnswerTable = () => {
     const page = Number(searchParams.get('page')) || 1;
     const take = parseInt(import.meta.env.VITE_TABLE_TAKE);
     
-    const [forms, setForms] = useState<Form[]>([]);
+    const [answers, setAnswers] = useState<Answer[]>([]);
     const [searchTerm, setSearchTerm] = useState('')
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [filterPage, setFilterPage] = useState(page)
@@ -47,19 +47,19 @@ const FormsToAnswerTable = () => {
     useEffect(() => {
         const fetchForms = async () => {
             try {
-                const [formsResponse] = await Promise.all([
+                const [answersResponse] = await Promise.all([
                   apiService.get(`${apiEndpoint}`, {"take": take, "page": page}),
                   new Promise(resolve => setTimeout(resolve, 1500))
                 ])
 
-                setForms(Array.isArray(formsResponse.data.answers) ? (formsResponse.data.answers
+                setAnswers(Array.isArray(answersResponse.data.answers) ? (answersResponse.data.answers
                   .filter((answer: Answer) => !answer.userHasAnswered))
-                  .map((answer: Answer) => answer.form) : []);
+                  .map((answer: Answer) => answer) : []);
                   
-                setTotalFormsPage(formsResponse.data.total? Math.ceil(formsResponse.data.total / take) : 1)
+                setTotalFormsPage(answersResponse.data.total? Math.ceil(answersResponse.data.total / take) : 1)
             } catch (error) {
               console.error('Erro ao buscar formulários:', error);
-              setForms([]);
+              setAnswers([]);
             } finally {
               setIsInitialLoading(false);
             }
@@ -67,11 +67,6 @@ const FormsToAnswerTable = () => {
 
         fetchForms();
     }, []);
-
-    const filteredForms = forms.length > 0 ? forms.filter(form =>
-        [form.id.toString(), form.category]
-        .some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
-    ): [];
 
     return (
       <Card className='min-h-[70vh] flex flex-col'>
@@ -105,7 +100,7 @@ const FormsToAnswerTable = () => {
               </Button>
             </div>
           </div>
-          {filteredForms.length > 0 ? (
+          {answers.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -117,15 +112,15 @@ const FormsToAnswerTable = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredForms.map((form, idx) => (
+              {answers.map((answer, idx) => (
                 <TableRow key={idx}>
-                  <TableCell className="font-medium">{form.name}</TableCell>
-                  <TableCell className="font-medium">{form.category}</TableCell>
-                  <TableCell className="font-medium">{form.questions? form.questions.length : 0} Perguntas</TableCell>
-                  <TableCell className="font-medium">{formatDate(form.createdAt)}</TableCell>
+                  <TableCell className="font-medium">{answer.form.name}</TableCell>
+                  <TableCell className="font-medium">{answer.form.category}</TableCell>
+                  <TableCell className="font-medium">{answer.form.questions? answer.form.questions.length : 0} Perguntas</TableCell>
+                  <TableCell className="font-medium">{formatDate(answer.form.createdAt)}</TableCell>
                   <TableCell>
                       <div className='flex gap-1'>
-                       <Link to={`/forms/${form.id}/respostas/${forms[0].id}`}>
+                       <Link to={`/forms/${answer.form.id}/respostas/${answer.id}`}>
                           <Button variant="ghost" className='p-1 opacity-70'>
                             Responder<FileSymlink /> 
                           </Button>

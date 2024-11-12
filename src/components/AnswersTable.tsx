@@ -25,25 +25,32 @@ import {
   Download, 
 } from "lucide-react"
 import ApiService from '@/services/ApiService'
-import { Answer } from '@/types/User'
+import { Answer, Form, User } from '@/types/User'
 import { useSearchParams  } from 'react-router-dom'
 import NotFound from './NotFound'
 
 import Pagination from './Pagination'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 
 
 const AnswersTable = () => {
     const apiService = new ApiService();
     const apiEndpoint = "private/answers"
+    const apiUsersEndpoint = "private/users"
+    const apiFormsEndpoint = "private/forms"
     const [searchParams] = useSearchParams();
     const page = Number(searchParams.get('page')) || 1;
     const take = parseInt(import.meta.env.VITE_TABLE_TAKE);
     const isAdmin = localStorage.getItem("is-auth") === "Admin";
 
     const [answers, setAnswers] = useState<Answer[]>([]);
-    const [newAnswer, setNewAnswer] = useState({id: 0, userAnswers: [""], user: 0, form: 0});
+    const [forms, setForms] = useState<Form[]>([]);
+    const [selectedForm, setSelectedForm] = useState<Form>();
+    const [users, setUsers] = useState<User[]>([]);
+    const [selectedUser, setSelectedUser] = useState<User>();
+    const [newAnswer, setNewAnswer] = useState({id: 0, userAnswers: [""], user: { id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} }, form: {id: 0, name: "", category: ''}});
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedAnswer, setSelectedAnswer] = useState({id: 0, userAnswers: [""], user: 0, form: 0});
+    const [selectedAnswer, setSelectedAnswer] = useState({id: 0, userAnswers: [""], user: { id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} }, form: {id: 0, name: "", category: ''}});
     const [isLoading, setIsLoading] = useState(false);
     const [addIsOpen, setAddIsOpen] = useState(false);
     const [updateIsOpen, setUpdateIsOpen] = useState(false);
@@ -62,7 +69,16 @@ const AnswersTable = () => {
               ]);
 
               setAnswers(Array.isArray(answersResponse.data.answers) ? answersResponse.data.answers : []);
-              setTotalAnswersPage(answersResponse.data.total? Math.ceil(answersResponse.data.total / take) : 1)
+              setTotalAnswersPage(answersResponse.data.total? Math.ceil(answersResponse.data.total / take) : 1);
+              
+              if (isAdmin){
+                const [usersResponse, formsResponse] = await Promise.all([
+                  apiService.get(`${apiUsersEndpoint}`),
+                  apiService.get(`${apiFormsEndpoint}`)
+                ]);
+                setUsers(Array.isArray(usersResponse.data.users) ? usersResponse.data.users : []);
+                setForms(Array.isArray(formsResponse.data.forms) ? formsResponse.data.forms : []);
+              }
             } catch (error) {
                 console.error('Error fetching answers:', error);
                 setAnswers([]);
@@ -98,7 +114,7 @@ const AnswersTable = () => {
 
         setAnswers(prevAnswers => Array.isArray(prevAnswers) ? [...prevAnswers, response.data] : [response.data]);
         setAddIsOpen(false);
-        setNewAnswer({id: 0, userAnswers: [""], user: 0, form: 0});
+        setNewAnswer({id: 0, userAnswers: [""], user: { id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} }, form: {id: 0, name: "", category: ''}});
       } catch (error: any) {
         setAnswerAddError(error.message || "An error occurred. Please try again.")
       } finally {
@@ -194,14 +210,68 @@ const AnswersTable = () => {
                   </DialogHeader>
                   <form onSubmit={handleAddAnswer} className="space-y-4">
                     <div>
-                      <Label htmlFor="name">Nome do Time</Label>
-                      <Input
-                        id="name"
-                        value={newAnswer.userAnswers}
-                        onChange={(e) => setNewAnswer({...newAnswer, userAnswers: e.target.value.split(",")})}
-                        required
-                      />
-                    </div>
+                        <Label htmlFor="user">Usuário</Label>
+                        <Select
+                          onValueChange={(userId) => {
+                            const newUser = users.find(user => user.id === Number(userId))
+                            if (newUser) {
+                              setNewAnswer({
+                                ...newAnswer,
+                                user: {id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, team: newUser.team}}
+                              )
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            {users.length > 0 ? (
+                              <SelectValue placeholder="Escolha um usuário" />
+                            ) : (
+                              <SelectValue placeholder="Nenhum usuário criado!" />
+                            )}
+                          </SelectTrigger>
+                          {users.length > 0 && (
+                            <SelectContent>
+                              <SelectGroup>
+                                {users.map((user) => (
+                                  <SelectItem key={user.id} value={user.id.toString()}>{user.name}</SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          )}
+                        </Select>
+                      </div>
+                    
+                      <div>
+                        <Label htmlFor="form">Formulário</Label>
+                        <Select
+                          onValueChange={(formId) => {
+                            const newForm = forms.find(form => form.id === Number(formId))
+                            if (newForm) {
+                              setNewAnswer({
+                                ...newAnswer,
+                                form: {id: newForm.id, name: newForm.name, category: newForm.category}}
+                              )
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            {forms.length > 0 ? (
+                              <SelectValue placeholder="Escolha um formulário" />
+                            ) : (
+                              <SelectValue placeholder="Nenhum formulário criado!" />
+                            )}
+                          </SelectTrigger>
+                          {forms.length > 0 && (
+                            <SelectContent>
+                              <SelectGroup>
+                                {forms.map((form) => (
+                                  <SelectItem key={form.id} value={form.id.toString()}>{form.name}</SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          )}
+                        </Select>
+                      </div>
 
 
                     <div className='flex justify-end gap-1'>
@@ -217,7 +287,7 @@ const AnswersTable = () => {
                           <LoaderCircle className="animate-spin" />Aguarde
                         </Button>
                       ) : (
-                        !newAnswer.userAnswers ? (
+                        newAnswer.user.name !== "" && newAnswer.form.name !== ""? (
                           <Button type="submit">Adicionar</Button>
                         ) : (
                           <Button disabled type="submit">Adicionar</Button>
@@ -257,7 +327,7 @@ const AnswersTable = () => {
                 <TableCell className="font-medium">{answer.user.name}</TableCell>
                 <TableCell className="font-medium">{answer.user.team.name}</TableCell>
                 <TableCell className="font-medium">{answer.form.category}</TableCell>
-                <TableCell className="font-medium">{answer.userAnswers}</TableCell>
+                <TableCell className="font-medium">{answer.userAnswers.join(", ")}</TableCell>
                 <TableCell className="font-medium">
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${answer.userHasAnswered? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
                     {answer.userHasAnswered? "Respondido" : "Não Respondido"}

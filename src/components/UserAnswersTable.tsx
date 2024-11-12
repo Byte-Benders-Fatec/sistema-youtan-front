@@ -64,7 +64,7 @@ const UserAnswersForm = () => {
     try {
       const formAnswers = Object.values(getValues());
       const [response] = await Promise.all([
-        apiService.put(`${apiEndpoint}/${answerId}`, {userAnswers: formAnswers.join(", "), userHasAnswered: true}),
+        apiService.put(`${apiEndpoint}/${answerId}`, {userAnswers: formAnswers, userHasAnswered: true}),
         new Promise(resolve => setTimeout(resolve, 1500))
       ]);
 
