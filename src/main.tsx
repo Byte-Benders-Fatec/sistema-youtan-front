@@ -12,6 +12,8 @@ import DashboardsPage from './pages/Dashboards';
 import Notification from './components/Notifications';
 import FormsToAnswerTable from './components/FormsToAnswerTable';
 import FormsTable from './components/FormsTable';
+import AnswersPage from './pages/Answers';
+import UserAnswersForm from './components/UserAnswersTable';
 
 const router = createBrowserRouter([
   {
@@ -55,10 +57,24 @@ const router = createBrowserRouter([
       },
       {
         path: "responder",
-        element: <FormsToAnswerTable />
+        element: <FormsToAnswerTable />,
+        children:[
+          {
+            path:":id",
+            element: <UserAnswersForm />
+          },
+        ]
+  
       }
     ],
   },
+
+  {
+    path: "forms/:formId/respostas/:answersId",
+    element: <AnswersPage/>,
+  },
+
+
 
 ]);
 

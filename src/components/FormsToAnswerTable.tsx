@@ -125,7 +125,7 @@ const FormsToAnswerTable = () => {
                   <TableCell className="font-medium">{formatDate(form.createdAt)}</TableCell>
                   <TableCell>
                       <div className='flex gap-1'>
-                        <Link to={`/formularios/responder/${form.id}`}>
+                       <Link to={`/forms/${form.id}/respostas/${forms[0].id}`}>
                           <Button variant="ghost" className='p-1 opacity-70'>
                             Responder<FileSymlink /> 
                           </Button>
