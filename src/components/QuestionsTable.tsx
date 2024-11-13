@@ -60,8 +60,8 @@ const QuestionsTable = () => {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [questionTypes, setQuestionTypes] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('')
-    const [newQuestion, setNewQuestion] = useState({ id: 0, title: '', alternatives: [""], type: "", form: id})
-    const [selectedQuestion, setSelectedQuestion] = useState({ id: 0, title: '', alternatives: [""], type: "", form: id})
+    const [newQuestion, setNewQuestion] = useState({ id: 0, category: "", title: '', alternatives: [""], type: "", form: id})
+    const [selectedQuestion, setSelectedQuestion] = useState({ id: 0, category: "", title: '', alternatives: [""], type: "", form: id})
     const [isLoading, setIsLoading] = useState(false);
     const [addIsOpen, setAddIsOpen] = useState(false);
     const [updateIsOpen, setUpdateIsOpen] = useState(false);
@@ -111,7 +111,7 @@ const QuestionsTable = () => {
     };
 
     const filteredForms = questions.length > 0 ? questions.filter(question =>
-      [question.id.toString(), question.type, question.alternatives.toString(), question.title]
+      [question.id.toString(), question.category, question.type, question.alternatives.toString(), question.title]
       .some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
     ): [];
 
@@ -166,7 +166,7 @@ const QuestionsTable = () => {
 
       setQuestions(prevQuestions => Array.isArray(prevQuestions) ? [...prevQuestions, response.data] : [response.data])
       setAddIsOpen(false);
-      setNewQuestion({id: 0, title: "", alternatives: [""], type: "", form: id})
+      setNewQuestion({id: 0, category: "", title: "", alternatives: [""], type: "", form: id})
       } catch (error: any) {
         setQuestionAddError(error.message || "An error occurred. Please try again.")
       } finally {
@@ -261,6 +261,16 @@ const QuestionsTable = () => {
                     <DialogTitle>Adicionar Nova Pergunta</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleAddQuestion} className="space-y-4">
+                    <div>
+                        <Label htmlFor="category">Categoria</Label>
+                        <Input
+                        id="category"
+                        value={newQuestion.category}
+                        onChange={(e) => setNewQuestion({...newQuestion, category: e.target.value})}
+                        required
+                        />
+                      </div>
+
                       <div>
                         <Label htmlFor="title">Título</Label>
                         <Input
@@ -354,6 +364,7 @@ const QuestionsTable = () => {
             <TableHeader>
               <TableRow>
                   <TableHead>ID</TableHead>
+                  <TableHead>Categoria</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Alternativas</TableHead>
@@ -364,6 +375,7 @@ const QuestionsTable = () => {
               {filteredForms.map((question) => (
                 <TableRow key={question.id}>
                   <TableCell>{question.id}</TableCell>
+                  <TableCell className="font-medium">{question.category}</TableCell>
                   <TableCell className="font-medium">{question.type}</TableCell>
                   <TableCell className="font-medium">{question.title}</TableCell>
                   <TableCell className="font-medium">{question.alternatives.join(", ")}</TableCell>
@@ -396,6 +408,7 @@ const QuestionsTable = () => {
                                         required
                                         />
                                       </div>
+
                                       <div>
                                         <Label htmlFor="title">Título</Label>
                                         <Input
@@ -446,6 +459,17 @@ const QuestionsTable = () => {
                         required
                         />
                       </div>
+
+                      <div>
+                        <Label htmlFor="category">Categoria</Label>
+                        <Input
+                        id="category"
+                        value={selectedQuestion.category}
+                        onChange={(e) => setSelectedQuestion({...selectedQuestion, category: e.target.value})}
+                        required
+                        />
+                      </div>
+
                       <div>
                         <Label htmlFor="title">Título</Label>
                         <Input

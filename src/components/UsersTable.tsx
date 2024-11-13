@@ -47,8 +47,8 @@ export default function UsersTable() {
   const [userRoles, setUsersRoles] = useState<string[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [newUser, setNewUser] = useState<User>({ id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} })
-  const [selectedUser, setSelectedUser] = useState<User>({ id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} })
+  const [newUser, setNewUser] = useState<User>({ id: 0, name: '', email: '', password: "", role: '', team: {id: 0, name: ""} })
+  const [selectedUser, setSelectedUser] = useState<User>({ id: 0, name: '', email: '', password: "", role: '', team: {id: 0, name: ""} })
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [userAddError, setUserAddError] = useState("")
@@ -112,7 +112,7 @@ export default function UsersTable() {
       }
       setUsers(prevUsers => Array.isArray(prevUsers) ? [...prevUsers, response.data] : [response.data])
       setAddIsOpen(false);
-      setNewUser({ id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} })
+      setNewUser({ id: 0, name: '', email: '', password: "", role: '', team: {id: 0, name: ""} })
     } catch (error: any) {
       setUserAddError(error.message || "An error occurred. Please try again.")
     } finally {
@@ -230,6 +230,18 @@ export default function UsersTable() {
                           required
                         />
                       </div>
+
+                      <div>
+                        <Label htmlFor="password">Senha</Label>
+                        <Input
+                        type='password'
+                          id="password"
+                          value={newUser.password}
+                          onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                          required
+                        />
+                      </div>
+
                       <div>
                         <Label htmlFor="role">Cargo</Label>
                         <Select
