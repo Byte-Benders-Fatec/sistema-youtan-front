@@ -2,6 +2,7 @@ interface User {
     id: number;
     name: string;
     email: string;
+    password: string;
     role: string;
     team: Team;
 }
@@ -23,6 +24,7 @@ interface Form {
 
 interface Question {
     id: number;
+    category: string;
     title: string;
     alternatives: string[];
     type: string;
