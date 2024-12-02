@@ -69,6 +69,14 @@ export default function SignIn() {
   const [loginError, setLoginError] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const [isFormValid, setIsFormValid] = React.useState(true);
+  
+  React.useEffect(()=> {
+    const userIsLoggedIn = localStorage.getItem(import.meta.env.VITE_AUTH_COOKIE_NAME)
+
+    if(userIsLoggedIn) {
+      navigate('/dashboard');
+    }
+  })
 
   const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
@@ -115,7 +123,7 @@ export default function SignIn() {
       const response = (await apiService.post(apiEndpoint, data)).data;
       
       setTimeout(() => {
-        localStorage.setItem("is-auth", response.role);
+        localStorage.setItem(import.meta.env.VITE_AUTH_COOKIE_NAME, response.role);
         navigate('/dashboard');
       }, 1000)
     } catch (error: any) {
@@ -142,7 +150,7 @@ export default function SignIn() {
             variant="h4"
             sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
           >
-            Admin
+            Login
           </Typography>
           <Box
             component="form"

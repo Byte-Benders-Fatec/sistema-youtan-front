@@ -14,13 +14,13 @@ const SideBarLayout = () => {
     const apiEndpoint = "public/auth/logout";
 
     apiService.get(apiEndpoint)
-    localStorage.removeItem("is-auth");
+    localStorage.removeItem(import.meta.env.VITE_AUTH_COOKIE_NAME);
     window.location.href = "/login"
   }
 
   
   type UserRole = "Admin" | "Líder" | "Líder e Liderado" | "Liderado" | null;
-  const userRole = localStorage.getItem("is-auth") as UserRole;
+  const userRole = localStorage.getItem(import.meta.env.VITE_AUTH_COOKIE_NAME) as UserRole;
 
   type RoleLinks = {
     [key: string]: { endpoint: string; component: React.ComponentType<{ className?: string }>; name: string }[];
@@ -56,7 +56,7 @@ const SideBarLayout = () => {
         "name": "Dashboard"
       },
       {
-        "endpoint": "/times",
+        "endpoint": "/meuTime",
         "component": UsersRound,
         "name": "Meu time"
       },
@@ -73,7 +73,7 @@ const SideBarLayout = () => {
         "name": "Dashboard"
       },
       {
-        "endpoint": "/times",
+        "endpoint": "/meuTime",
         "component": UsersRound,
         "name": "Meu time"
       },
@@ -97,36 +97,50 @@ const SideBarLayout = () => {
     ]
   }
   return (
-    <aside className="w-64 bg-white shadow-md">
-          <div className="p-4">
-              <h1 className="text-2xl font-bold text-blue-600">YOUTAN</h1>
-          </div>
-          <nav className="mt-8">
+    <aside className="bg-white shadow-md lg:w-64 w-20">
+  <div className="p-4">
+    <h1 className="text-2xl font-bold text-blue-600 hidden lg:block">YOUTAN</h1>
+    <h1 className="text-2xl font-bold text-blue-600 lg:hidden">Y</h1>
+  </div>
+  <nav className="mt-8">
+    {userRole ? (
+      roleBtns[userRole].map((btn, idx) => {
+        const ComponentIcon = btn.component;
 
-            {userRole? roleBtns[userRole].map((btn, idx) => {
-              const ComponentIcon = btn.component;
-              
-              return (
-                <a href={btn.endpoint} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200" key={idx}>
-                  <ComponentIcon className="mr-3 h-5 w-5" />
-                  {btn.name}
-                </a>
-              );
-            }) : window.location.href = "/login"}
+        return (
+          <a
+            href={btn.endpoint}
+            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200"
+            key={idx}
+          >
+            <ComponentIcon className="h-5 w-5" />
+            <span className="ml-3 hidden lg:block">{btn.name}</span>
+          </a>
+        );
+      })
+    ) : (
+      (window.location.href = "/login")
+    )}
+  </nav>
+  <div className="absolute bottom-0 p-4">
+    <a
+      href="#"
+      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200"
+    >
+      <Settings className="h-5 w-5" />
+      <span className="ml-3 hidden lg:block">Configurações</span>
+    </a>
+    <a
+      href="#"
+      onClick={logout}
+      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200"
+    >
+      <LogOut className="h-5 w-5" />
+      <span className="ml-3 hidden lg:block">Sair</span>
+    </a>
+  </div>
+</aside>
 
-          </nav>
-
-          <div className="absolute bottom-0 w-64 p-4">
-            <a href="#" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200">
-              <Settings className="mr-3 h-5 w-5" />
-                Configurações
-            </a>
-            <a href="#" onClick={logout} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200">
-              <LogOut className="mr-3 h-5 w-5" />
-                Sair
-            </a>
-          </div>
-      </aside>
   )
 }
 

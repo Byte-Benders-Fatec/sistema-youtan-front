@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import { LoaderCircle, Pen, Plus, X } from "lucide-react"
+import { LoaderCircle, Pen, Plus, View, X } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -15,6 +15,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -25,14 +26,19 @@ import {
   Download, 
 } from "lucide-react"
 import ApiService from '@/services/ApiService'
-import { Answer, Form, User } from '@/types/User'
+import { Answer, DefaultAnswer, Form, User } from '@/types/User'
 import { useSearchParams  } from 'react-router-dom'
 import NotFound from './NotFound'
 
 import Pagination from './Pagination'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { ScrollArea } from './ui/scroll-area'
 
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
+import { Checkbox } from './ui/checkbox'
+import FormAnswered from './ViewAnswers'
+import { DialogActions } from '@mui/material'
+import { DatePickerWithRange } from './ui/datepicker'
 
 const AnswersTable = () => {
     const apiService = new ApiService();
@@ -41,31 +47,57 @@ const AnswersTable = () => {
     const apiFormsEndpoint = "private/forms"
     const [searchParams] = useSearchParams();
     const page = Number(searchParams.get('page')) || 1;
+    const from = searchParams.get('from') || undefined;
+    const to = searchParams.get('to') || undefined;
+
     const take = parseInt(import.meta.env.VITE_TABLE_TAKE);
-    const isAdmin = localStorage.getItem("is-auth") === "Admin";
+    const isAdmin = localStorage.getItem(import.meta.env.VITE_AUTH_COOKIE_NAME) === "Admin";
 
     const [answers, setAnswers] = useState<Answer[]>([]);
     const [forms, setForms] = useState<Form[]>([]);
-    const [selectedForm, setSelectedForm] = useState<Form>();
     const [users, setUsers] = useState<User[]>([]);
-    const [selectedUser, setSelectedUser] = useState<User>();
-    const [newAnswer, setNewAnswer] = useState({id: 0, userAnswers: [""], user: { id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} }, form: {id: 0, name: "", category: ''}});
+    const [newAnswer, setNewAnswer] = useState<Answer>(DefaultAnswer);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedAnswer, setSelectedAnswer] = useState({id: 0, userAnswers: [""], user: { id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} }, form: {id: 0, name: "", category: ''}});
+    const [selectedAnswer, setSelectedAnswer] = useState<Answer>(DefaultAnswer);
     const [isLoading, setIsLoading] = useState(false);
     const [addIsOpen, setAddIsOpen] = useState(false);
-    const [updateIsOpen, setUpdateIsOpen] = useState(false);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [answerAddError, setAnswerAddError] = useState("")
     const [filterPage, setFilterPage] = useState(page)
     const [totalAnswersPage, setTotalAnswersPage] = useState(1)
+
+    const [selectedAnswers, setSelectedAnswers] = useState<Answer[]>([])
+    const [isModalOpen, setIsModalOpen] = useState(false)
+
+    useEffect(() => {
+      if (addIsOpen) {
+        setSelectedAnswers([]);
+      }
+    }, [selectedAnswers])
+
+    const handleCheckboxChange = (answer: Answer) => {
+      setSelectedAnswers(prev => {
+        if (prev.includes(answer)) {
+          const newSelection = prev.filter(a => a !== answer)
+
+          return newSelection
+        } else if (prev.length < 2) {
+          return [...prev, answer]
+        }
+        return prev
+      })
+    }
+  
+    const isCheckboxDisabled = (answer: Answer) => {
+      return (!answer.userHasAnswered) || (selectedAnswers.length >= 2 && !selectedAnswers.includes(answer))
+    }
 
     useEffect(() => {
         const fetchAnswers = async () => {
           setIsInitialLoading(true);
             try {
               const [answersResponse] = await Promise.all([
-                apiService.get(`${apiEndpoint}`, {"take": take, "page": page}),
+                apiService.get(`${apiEndpoint}`, {"take": take, "page": page, "from": from, "to": to}),
                 new Promise(resolve => setTimeout(resolve, 1500))
               ]);
 
@@ -95,13 +127,22 @@ const AnswersTable = () => {
         setSelectedAnswer({ ...answer});
     };
 
+    const formatDate = (dataTimestamp: Date) => {
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }).format(new Date(dataTimestamp));
+    }
+
     const filteredAnswers = answers.length > 0 ? answers.filter(answer =>
-    [answer.id.toString(), answer.user.name, answer.user.team.name, answer.form.category, answer.userAnswers?.toString()].some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
+    [answer.id.toString(), answer.user.name, answer.user.team.name, answer.form.category, answer.form.name, formatDate(answer.updatedAt), (answer.userHasAnswered)? "Respondido" : "Não Respondido"].some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
     ): [];
 
     const handleAddAnswer = async (e: React.FormEvent) => {
       e.preventDefault();
       setIsLoading(true);
+      newAnswer.form.team = newAnswer.user.team;
 
       try {
         const [response] = await Promise.all([
@@ -115,7 +156,7 @@ const AnswersTable = () => {
 
         setAnswers(prevAnswers => Array.isArray(prevAnswers) ? [...prevAnswers, response.data] : [response.data]);
         setAddIsOpen(false);
-        setNewAnswer({id: 0, userAnswers: [""], user: { id: 0, name: '', email: '', role: '', team: {id: 0, name: ""} }, form: {id: 0, name: "", category: ''}});
+        setNewAnswer(DefaultAnswer);
       } catch (error: any) {
         setAnswerAddError(error.message || "An error occurred. Please try again.")
       } finally {
@@ -123,59 +164,21 @@ const AnswersTable = () => {
       }
     };
 
-    const handleUpdateAnswer = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setIsLoading(true);
-
-      try {
-        const [response] = await Promise.all([
-          apiService.put(`${apiEndpoint}/${selectedAnswer.id}`, selectedAnswer),
-          new Promise(resolve => setTimeout(resolve, 1500))
-        ]);
-
-        if (response.data.error) {
-          throw new Error(response.data.error);
-        }
-
-        setAnswers(prevAnswers => 
-          Array.isArray(prevAnswers) 
-            ? prevAnswers.map(answer => answer.id === selectedAnswer.id ? response.data : answer)
-            : [response.data]
-        )
-        setUpdateIsOpen(false);
-      } catch (error: any) {
-          console.error("Erro ao adicionar resposta! Tente novamente...");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const handleRemoveAnswer = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setIsLoading(true);
-
-      try {
-        const [response] = await Promise.all([
-          apiService.delete(`${apiEndpoint}/${selectedAnswer.id}`),
-          new Promise(resolve => setTimeout(resolve, 1500))
-        ]);
-        if (response.data.error) {
-          throw new Error(response.data.error)
-        }
-
-        setAnswers(prevAnswers => 
-          Array.isArray(prevAnswers) 
-            ? prevAnswers.filter(answer => answer.id !== selectedAnswer.id)
-            : []
-        )
-      } catch (error: any) {
-        console.log("Erro ao excluir resposta! Tente novamente...");
+    const tabelaRef = useRef<HTMLTableElement>(null);
+    const downloadPDF = async () => {
+      if (tabelaRef.current) {
+        const canvas = await html2canvas(tabelaRef.current);
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4");
         
-      } finally {
-        setIsLoading(false);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.save("tabela.pdf");
       }
     };
-
+    
     return (
     <Card className='min-h-[70vh] flex flex-col'>
       <CardHeader>
@@ -218,7 +221,9 @@ const AnswersTable = () => {
                             if (newUser) {
                               setNewAnswer({
                                 ...newAnswer,
-                                user: {id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, team: newUser.team}}
+                                user: {
+                                  id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, team: newUser.team, password: ''
+                                }}
                               )
                             }
                           }}
@@ -241,7 +246,7 @@ const AnswersTable = () => {
                           )}
                         </Select>
                       </div>
-                    
+
                       <div>
                         <Label htmlFor="form">Formulário</Label>
                         <Select
@@ -250,7 +255,9 @@ const AnswersTable = () => {
                             if (newForm) {
                               setNewAnswer({
                                 ...newAnswer,
-                                form: {id: newForm.id, name: newForm.name, category: newForm.category}}
+                                form: {
+                                  id: newForm.id, name: newForm.name, description: newForm.description, category: newForm.category, team: newForm.team, createdAt: new Date()
+                                }}
                               )
                             }
                           }}
@@ -299,36 +306,42 @@ const AnswersTable = () => {
                 </DialogContent>
               </Dialog>
             }
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtrar
+
+            <Button variant="outline" disabled={selectedAnswers.length < 2} onClick={() => setIsModalOpen(true)}>
+              <View className="mr-2 h-4 w-4"></View>
+              Comparar
             </Button>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Baixar PDF
-            </Button>
+            <DatePickerWithRange from={from} to={to}/>
           </div>
         </div>
         {filteredAnswers.length > 0 ? (
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead></TableHead>
               {isAdmin &&<TableHead>ID</TableHead>}
               <TableHead>Nome</TableHead>
               <TableHead>Time</TableHead>
               <TableHead>Formulário</TableHead>
-              <TableHead>Perguntas e Respostas</TableHead>
+              <TableHead>Respondido em</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredAnswers.map((answer, idx) => (
               <TableRow key={idx}>
+                <TableCell className="font-medium">
+                <Checkbox
+                  checked={selectedAnswers.includes(answer)}
+                  onCheckedChange={() => handleCheckboxChange(answer)}
+                  disabled={isCheckboxDisabled(answer)}
+                />
+              </TableCell>
                 {isAdmin &&<TableCell>{answer.id}</TableCell>}
                 <TableCell className="font-medium">{answer.user.name}</TableCell>
-                <TableCell className="font-medium">{answer.user.team.name}</TableCell>
-                <TableCell className="font-medium">{answer.form.category}</TableCell>
-                <TableCell className="font-medium">{answer.userAnswers.join(", ")}</TableCell>
+                <TableCell className="font-medium">{answer.form.team.name}</TableCell>
+                <TableCell className="font-medium">{answer.form.name} - {answer.form.category}</TableCell>
+                <TableCell className="font-medium">{(answer.userHasAnswered)? answer.updatedAt && formatDate(answer.updatedAt): "-"}</TableCell>
                 <TableCell className="font-medium">
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${answer.userHasAnswered? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
                     {answer.userHasAnswered? "Respondido" : "Não Respondido"}
@@ -338,47 +351,26 @@ const AnswersTable = () => {
             ))}
           </TableBody>
 
-          <Dialog open={updateIsOpen} onOpenChange={setUpdateIsOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Atualizar Resposta</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleUpdateAnswer} className="space-y-4">
-                    <div>
-                        <Label htmlFor="id">ID</Label>
-                        <Input
-                        disabled
-                        id="id"
-                        value={selectedAnswer.id}
-                        onChange={(e) => setSelectedAnswer({...selectedAnswer, id: Number(e.target.value)})}
-                        required
-                        />
-                    </div>
-                    <div>
-                        <Label htmlFor="name">Nome</Label>
-                        <Input
-                        id="name"
-                        value={selectedAnswer.userAnswers}
-                        onChange={(e) => setSelectedAnswer({...selectedAnswer, userAnswers: e.target.value.split(",")})}
-                        required
-                        />
-                    </div>
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogContent className="max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-4xl max-h-[100vh] overflow-y-auto justify-between">
+              <div className='gap-3 md:block lg:flex' ref={tabelaRef}>
+                {selectedAnswers.map((answer) => (
+                  <FormAnswered answer={answer} />
+                ))}
+              </div>
 
-        
-                    <div className='flex justify-end gap-1'>
-                      <DialogClose asChild>
-                      {isLoading? (<Button disabled type="button" variant="secondary">
-                        Cancelar
-                      </Button>) : (<Button type="button" variant="secondary">
-                        Cancelar
-                      </Button>)}
-                      </DialogClose>
-                      {isLoading? (
-                        <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
-                      :
-                      (<Button type="submit">Atualizar</Button>)}
-                    </div>
-                </form>
+              <DialogActions>
+
+                <Button variant="outline" onClick={() => {setIsModalOpen(false)}}>
+                  Fechar
+                </Button>
+
+                <Button onClick={downloadPDF}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Baixar PDF
+                </Button>
+
+              </DialogActions>
             </DialogContent>
           </Dialog>
 

@@ -49,7 +49,7 @@ if(import.meta.env.VITE_SKIP_AUTH !== 'true' || import.meta.env.VITE_SKIP_AUTH !
     (response) => response,
     (error) => {
       if (error.response.status === HttpStatus.UNAUTHORIZED) {
-        localStorage.removeItem('is-auth')
+        localStorage.removeItem('import.meta.env.VITE_AUTH_COOKIE_NAME')
       }
       return Promise.reject(error)
     }

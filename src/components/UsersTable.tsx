@@ -20,9 +20,9 @@ import {
   DialogTrigger,
 } from "./ui/dialog"
 import { Label } from "./ui/label"
-import { Filter, Download, ChevronLeft, ChevronRight } from "lucide-react"
+import { Filter, Download } from "lucide-react"
 import ApiService from '@/services/ApiService'
-import { User, Team } from '@/types/User'
+import { User, DefaultUser, Team } from '@/types/User'
 import { DialogDescription } from '@radix-ui/react-dialog'
 import NotFound from './NotFound'
 import {
@@ -42,13 +42,14 @@ export default function UsersTable() {
   const apiTeamEndpoint = "private/teams"
   const [searchParams] = useSearchParams();
   const page = Number(searchParams.get('page')) || 1;
+  const take = parseInt(import.meta.env.VITE_TABLE_TAKE);
 
   const [users, setUsers] = useState<User[]>([])
   const [userRoles, setUsersRoles] = useState<string[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [newUser, setNewUser] = useState<User>({ id: 0, name: '', email: '', password: "", role: '', team: {id: 0, name: ""} })
-  const [selectedUser, setSelectedUser] = useState<User>({ id: 0, name: '', email: '', password: "", role: '', team: {id: 0, name: ""} })
+  const [newUser, setNewUser] = useState<User>(DefaultUser)
+  const [selectedUser, setSelectedUser] = useState<User>(DefaultUser)
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [userAddError, setUserAddError] = useState("")
@@ -62,14 +63,14 @@ export default function UsersTable() {
       setIsInitialLoading(true)
       try {
         const [usersResponse, rolesResponse, teamsResponse] = await Promise.all([
-          apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
+          apiService.get(`${apiEndpoint}`, {"take": take, "page": page}),
           apiService.get(`${apiEndpoint}/roles`),
           apiService.get(apiTeamEndpoint),
           new Promise(resolve => setTimeout(resolve, 1500))
         ]);
 
         setUsers(Array.isArray(usersResponse.data.users) ? usersResponse.data.users : [])
-        setTotalUsersPage(usersResponse.data.total? Math.ceil(usersResponse.data.total / 5) : 1)
+        setTotalUsersPage(usersResponse.data.total? Math.ceil(usersResponse.data.total / take) : 1)
         setUsersRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : [])
         setTeams(Array.isArray(teamsResponse.data.teams) ? teamsResponse.data.teams : [])
       } catch (error) {
@@ -112,7 +113,7 @@ export default function UsersTable() {
       }
       setUsers(prevUsers => Array.isArray(prevUsers) ? [...prevUsers, response.data] : [response.data])
       setAddIsOpen(false);
-      setNewUser({ id: 0, name: '', email: '', password: "", role: '', team: {id: 0, name: ""} })
+      setNewUser(DefaultUser)
     } catch (error: any) {
       setUserAddError(error.message || "An error occurred. Please try again.")
     } finally {

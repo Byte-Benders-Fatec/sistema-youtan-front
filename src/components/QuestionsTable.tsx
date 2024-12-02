@@ -22,11 +22,9 @@ import {
 import { Label } from "./ui/label"
 import { 
   Filter, 
-  Download, 
-  ChevronLeft, 
-  ChevronRight,
+  Download
 } from "lucide-react"
-import {Question} from '@/types/User'
+import {DefaultQuestion, Question} from '@/types/User'
 import ApiService from '@/services/ApiService'
 import { DialogDescription } from '@radix-ui/react-dialog';
 
@@ -56,12 +54,14 @@ const QuestionsTable = () => {
     const apiFormsEndpoint = "private/forms"
     const [searchParams] = useSearchParams();
     const page = Number(searchParams.get('page')) || 1;
+    const take = parseInt(import.meta.env.VITE_TABLE_TAKE);
 
     const [questions, setQuestions] = useState<Question[]>([]);
     const [questionTypes, setQuestionTypes] = useState<string[]>([]);
+    const [questionCategories, setQuestionCategories] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('')
-    const [newQuestion, setNewQuestion] = useState({ id: 0, category: "", title: '', alternatives: [""], type: "", form: id})
-    const [selectedQuestion, setSelectedQuestion] = useState({ id: 0, category: "", title: '', alternatives: [""], type: "", form: id})
+    const [newQuestion, setNewQuestion] = useState({...DefaultQuestion, form: {id}})
+    const [selectedQuestion, setSelectedQuestion] = useState({...DefaultQuestion, form: {id}})
     const [isLoading, setIsLoading] = useState(false);
     const [addIsOpen, setAddIsOpen] = useState(false);
     const [updateIsOpen, setUpdateIsOpen] = useState(false);
@@ -73,15 +73,18 @@ const QuestionsTable = () => {
     useEffect(() => {
       const fetchForms = async () => {
         try {
-          const [questionsResponse, types] = await Promise.all([
-            apiService.get(`${apiEndpoint}/${id}`, {"take": 5, "page": page}),
+          const [questionsResponse, types, categories] = await Promise.all([
+            apiService.get(`${apiEndpoint}/${id}`, {"take": take, "page": page}),
             apiService.get(`${apiEndpoint}/types`),
+            apiService.get(`${apiEndpoint}/categories`),
             new Promise(resolve => setTimeout(resolve, 1500))
           ]);
 
           setQuestions(Array.isArray(questionsResponse.data.questions) ? questionsResponse.data.questions : []);
-          setTotalQuestionsPage(questionsResponse.data.total? Math.ceil(questionsResponse.data.total / 5) : 1)
           setQuestionTypes(Array.isArray(types.data) ? types.data : []);
+          setQuestionCategories(Array.isArray(categories.data) ? categories.data : []);
+          setTotalQuestionsPage(questionsResponse.data.total? Math.ceil(questionsResponse.data.total / take) : 1)
+           
         } catch (error) {
           console.error('Error fetching questions:', error);
           setQuestions([]);
@@ -106,7 +109,7 @@ const QuestionsTable = () => {
     const handleQuestionSelect = (question: Question) => {
       setSelectedQuestion({
         ...question,
-        form: id
+        form: {id}
       });
     };
 
@@ -166,7 +169,7 @@ const QuestionsTable = () => {
 
       setQuestions(prevQuestions => Array.isArray(prevQuestions) ? [...prevQuestions, response.data] : [response.data])
       setAddIsOpen(false);
-      setNewQuestion({id: 0, category: "", title: "", alternatives: [""], type: "", form: id})
+      setNewQuestion({...DefaultQuestion, form: {id}})
       } catch (error: any) {
         setQuestionAddError(error.message || "An error occurred. Please try again.")
       } finally {
@@ -261,14 +264,22 @@ const QuestionsTable = () => {
                     <DialogTitle>Adicionar Nova Pergunta</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleAddQuestion} className="space-y-4">
-                    <div>
+                  <div>
                         <Label htmlFor="category">Categoria</Label>
-                        <Input
-                        id="category"
-                        value={newQuestion.category}
-                        onChange={(e) => setNewQuestion({...newQuestion, category: e.target.value})}
-                        required
-                        />
+                        <Select
+                        onValueChange={(category) => {setNewQuestion({...newQuestion, category})}}
+                        >
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Escolha uma categoria" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                {questionCategories.map((category, idx) => (
+                                    <SelectItem key={idx} value={category}>{category}</SelectItem>
+                                ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
                       </div>
 
                       <div>
@@ -462,12 +473,21 @@ const QuestionsTable = () => {
 
                       <div>
                         <Label htmlFor="category">Categoria</Label>
-                        <Input
-                        id="category"
+                        <Select
                         value={selectedQuestion.category}
-                        onChange={(e) => setSelectedQuestion({...selectedQuestion, category: e.target.value})}
-                        required
-                        />
+                        onValueChange={(category) => {setSelectedQuestion({...selectedQuestion, category})}}
+                        >
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Escolha uma categoria" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                {questionCategories.map((category, idx) => (
+                                    <SelectItem key={idx} value={category}>{category}</SelectItem>
+                                ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
                       </div>
 
                       <div>

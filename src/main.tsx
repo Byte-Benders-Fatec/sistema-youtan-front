@@ -13,6 +13,8 @@ import FormsToAnswerTable from './components/FormsToAnswerTable';
 import FormsTable from './components/FormsTable';
 import AnswersPage from './pages/Answers';
 import UserAnswersForm from './components/UserAnswersTable';
+import MyTeamPage from './pages/MyTeam';
+import AnswersTable from './components/AnswersTable';
 
 const router = createBrowserRouter([
   {
@@ -22,6 +24,12 @@ const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: <DashboardsPage />,
+    children: [
+      {
+        path: ":from/:to",
+        element: <AnswersTable />
+      }
+    ]
   },
   {
     path: "/usuarios",
@@ -36,6 +44,10 @@ const router = createBrowserRouter([
   {
     path: "/times",
     element: <TeamsPage />,
+  },
+  {
+    path: "/meuTime",
+    element: <MyTeamPage />,
   },
   {
     path: "/login",
@@ -72,8 +84,6 @@ const router = createBrowserRouter([
     path: "forms/:formId/respostas/:answerId",
     element: <AnswersPage/>,
   },
-
-
 
 ]);
 

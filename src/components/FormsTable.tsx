@@ -26,7 +26,7 @@ import {
   ChevronLeft, 
   ChevronRight,
 } from "lucide-react"
-import {Form} from '@/types/User'
+import {DefaultForm, Form, Team} from '@/types/User'
 import { useSearchParams  } from 'react-router-dom'
 import ApiService from '@/services/ApiService'
 import { DialogDescription } from '@radix-ui/react-dialog';
@@ -47,14 +47,18 @@ import Pagination from './Pagination'
 const FormsTable = () => {
     const apiService = new ApiService();
     const apiEndpoint = "private/forms"
+    const apiTeamEndpoint = "private/teams"
     const [searchParams] = useSearchParams();
     const page = Number(searchParams.get('page')) || 1;
+    const take = parseInt(import.meta.env.VITE_TABLE_TAKE);
+
+    const [teams, setTeams] = useState<Team[]>([]);
     
     const [forms, setForms] = useState<Form[]>([]);
     const [formCategories, setFormCategories] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('')
-    const [newForm, setNewForm] = useState({ id: 0, name: "", category: ''})
-    const [selectedForm, setSelectedForm] = useState({  id: 0, name: "", category: ''})
+    const [newForm, setNewForm] = useState<Form>(DefaultForm)
+    const [selectedForm, setSelectedForm] = useState<Form>(DefaultForm)
     const [isLoading, setIsLoading] = useState(false);
     const [addIsOpen, setAddIsOpen] = useState(false);
     const [updateIsOpen, setUpdateIsOpen] = useState(false);
@@ -67,15 +71,17 @@ const FormsTable = () => {
     useEffect(() => {
         const fetchForms = async () => {
             try {
-                const [formsResponse, categoriesResponse] = await Promise.all([
-                  apiService.get(`${apiEndpoint}`, {"take": 5, "page": page}),
+                const [formsResponse, categoriesResponse, teamsResponse] = await Promise.all([
+                  apiService.get(`${apiEndpoint}`, {"take": take, "page": page}),
                   apiService.get(`${apiEndpoint}/categories`),
+                  apiService.get(`${apiTeamEndpoint}`),
                   new Promise(resolve => setTimeout(resolve, 1500))
                 ])
 
                 setForms(Array.isArray(formsResponse.data.forms) ? formsResponse.data.forms : []);
-                setTotalFormsPage(formsResponse.data.total? Math.ceil(formsResponse.data.total / 5) : 1)
+                setTotalFormsPage(formsResponse.data.total? Math.ceil(formsResponse.data.total / take) : 1)
                 setFormCategories(Array.isArray(categoriesResponse.data) ? categoriesResponse.data : []);
+                setTeams(Array.isArray(teamsResponse.data.teams) ? teamsResponse.data.teams : []);
             } catch (error) {
               console.error('Erro ao buscar formulários:', error);
               setForms([]);
@@ -119,7 +125,7 @@ const FormsTable = () => {
 
       setForms(prevForms => Array.isArray(prevForms) ? [...prevForms, response.data] : [response.data])
       setAddIsOpen(false);
-      setNewForm({ id: 0, name: "", category: ""});
+      setNewForm(DefaultForm);
       } catch (error: any) {
         setUserFormError(error.message || "Ocorreu um erro! Tente novamente...");
       } finally {
@@ -226,6 +232,16 @@ const FormsTable = () => {
                   </div>
 
                   <div>
+                    <Label htmlFor="description">Descrição do Formulário</Label>
+                      <Input
+                        id="description"
+                        value={newForm.description}
+                        onChange={(e) => setNewForm({...newForm, description: e.target.value})}
+                        required
+                      />
+                  </div>
+
+                  <div>
                       <Label htmlFor="category">Categoria</Label>
                       <Select
                       onValueChange={(category) => {setNewForm({...newForm, category})}}
@@ -242,6 +258,38 @@ const FormsTable = () => {
                           </SelectContent>
                       </Select>
                     </div>
+
+                    <div>
+                        <Label htmlFor="team">Time</Label>
+                        <Select
+                          onValueChange={(teamId) => {
+                            const newTeam = teams.find(team => team.id === Number(teamId))
+                            if (newTeam) {
+                              setNewForm({
+                                ...newForm,
+                                team: { id: newTeam.id, name: newTeam.name }
+                              })
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            {teams.length > 0 ? (
+                              <SelectValue placeholder="Escolha um time" />
+                            ) : (
+                              <SelectValue placeholder="Nenhum time criado!" />
+                            )}
+                          </SelectTrigger>
+                          {teams.length > 0 && (
+                            <SelectContent>
+                              <SelectGroup>
+                                {teams.map((team) => (
+                                  <SelectItem key={team.id} value={team.id.toString()}>{team.name}</SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          )}
+                        </Select>
+                      </div>
 
                     <div className='flex justify-end gap-1'>
                       <DialogClose asChild>
@@ -389,6 +437,16 @@ const FormsTable = () => {
                         id="name"
                         value={selectedForm.name}
                         onChange={(e) => setSelectedForm({...selectedForm, name: e.target.value})}
+                        required
+                      />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">Descrição do Formulário</Label>
+                      <Input
+                        id="description"
+                        value={selectedForm.description}
+                        onChange={(e) => setSelectedForm({...selectedForm, description: e.target.value})}
                         required
                       />
                   </div>
