@@ -29,7 +29,6 @@ import ApiService from '@/services/ApiService'
 import { Answer, DefaultAnswer, Form, User } from '@/types/User'
 import { useSearchParams  } from 'react-router-dom'
 import NotFound from './NotFound'
-
 import Pagination from './Pagination'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 
@@ -320,10 +319,14 @@ const AnswersTable = () => {
               </Dialog>
             }
 
-            <Button variant="outline" disabled={selectedAnswers.length < 2} onClick={() => setIsModalOpen(true)}>
-              <View className="mr-2 h-4 w-4"></View>
-              Comparar
-            </Button>
+            {selectedAnswers.length == 2 && 
+            <>
+              <Button variant="outline" onClick={() => setIsModalOpen(true)}>
+                <View className="mr-2 h-4 w-4"></View>
+                Comparar
+              </Button>
+              </>
+            }
             <DatePickerWithRange from={from} to={to}/>
           </div>
         </div>

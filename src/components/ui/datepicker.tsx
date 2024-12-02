@@ -4,7 +4,7 @@ import * as React from "react"
 import { format, parseISO } from "date-fns"
 import { CalendarIcon, Filter, LoaderCircle } from "lucide-react"
 import { DateRange } from "react-day-picker"
-
+import { ptBR } from 'date-fns/locale'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -60,6 +60,7 @@ export function DatePickerWithRange(
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
+            locale={ptBR}
             initialFocus
             mode="range"
             defaultMonth={date?.from}
