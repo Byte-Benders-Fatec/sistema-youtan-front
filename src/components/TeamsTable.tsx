@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
@@ -30,10 +30,11 @@ import ApiService from '@/services/ApiService'
 import {Team} from '@/types/User'
 import { useSearchParams  } from 'react-router-dom'
 import { DialogDescription } from '@radix-ui/react-dialog';
-
 import NotFound from './NotFound'
-
 import Pagination from './Pagination'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
+import { v4 as uuidv4 } from 'uuid';
 
 
 const TeamsTable = () => {
@@ -163,6 +164,33 @@ const TeamsTable = () => {
       }
     };
 
+    const tabelaRef = useRef<HTMLTableElement>(null);
+    const downloadPDF = async () => {
+      setIsLoading(true);
+      if (tabelaRef.current) {
+        try {
+          const canvas = await html2canvas(tabelaRef.current, {
+            useCORS: true,
+            scale: 2,
+            scrollX: 0,
+            scrollY: 0,
+            backgroundColor: "#fff",
+          });
+      
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`${uuidv4()}.pdf`);
+          setIsLoading(false);
+        } catch (error) {
+          console.error("An error occurred. Please try again.");
+        }
+      }
+    };
+
     return (
     <Card className='min-h-[70vh] flex flex-col'>
       <CardHeader>
@@ -230,18 +258,14 @@ const TeamsTable = () => {
                 </form>
               </DialogContent>
             </Dialog>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtrar
-            </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={downloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Baixar PDF
             </Button>
           </div>
         </div>
         {filteredTeams.length > 0 ? (
-        <Table>
+        <Table ref={tabelaRef}>
           <TableHeader>
             <TableRow>
             <TableHead>ID</TableHead>

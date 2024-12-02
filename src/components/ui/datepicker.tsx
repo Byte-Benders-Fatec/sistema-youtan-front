@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { format, parseISO } from "date-fns"
-import { CalendarIcon, Filter } from "lucide-react"
+import { CalendarIcon, Filter, LoaderCircle } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
@@ -28,6 +28,8 @@ export function DatePickerWithRange(
     from: parseDate(props.from),
     to: parseDate(props.to),
   })
+
+  const [isLoading, setIsLoading] = React.useState(false);
 
   return (
     <div className={cn("grid gap-2", className)}>
@@ -65,21 +67,38 @@ export function DatePickerWithRange(
             onSelect={setDate}
             numberOfMonths={1}
           />
+          <div className="flex justify-end m-3 gap-3">
           <Button
-            variant="outline"
-            onClick={() => {
-              const formattedFrom = date?.from
-                ? format(date.from, "yyyy-MM-dd")
-                : "";
-              const formattedTo = date?.to
-                ? format(date.to, "yyyy-MM-dd")
-                : "";
-              window.location.href = `/dashboard?from=${formattedFrom}&to=${formattedTo}`;
-            }}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            Filtrar
-          </Button>
+                variant="outline"
+                onClick={() => {
+                  setDate(undefined);
+                }}
+              >
+                Remover
+              </Button>
+            {isLoading? (
+              <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+              :
+              <Button
+                variant="default"
+                onClick={async () => {
+                  setIsLoading(true);
+                  await new Promise(resolve => setTimeout(resolve, 1500))
+                  const formattedFrom = date?.from
+                    ? format(date.from, "yyyy-MM-dd")
+                    : "";
+                  const formattedTo = date?.to
+                    ? format(date.to, "yyyy-MM-dd")
+                    : "";
+                    setIsLoading(false);
+                  window.location.href = `/dashboard?from=${formattedFrom}&to=${formattedTo}`;
+                }}
+              >
+                <Filter className="mr-2 h-4 w-4" />
+                Filtrar
+              </Button>
+            }
+          </div>
         </PopoverContent>
       </Popover>
     </div>

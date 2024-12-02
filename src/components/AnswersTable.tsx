@@ -39,6 +39,7 @@ import { Checkbox } from './ui/checkbox'
 import FormAnswered from './ViewAnswers'
 import { DialogActions } from '@mui/material'
 import { DatePickerWithRange } from './ui/datepicker'
+import { v4 as uuidv4 } from 'uuid';
 
 const AnswersTable = () => {
     const apiService = new ApiService();
@@ -166,16 +167,28 @@ const AnswersTable = () => {
 
     const tabelaRef = useRef<HTMLTableElement>(null);
     const downloadPDF = async () => {
+      setIsLoading(true);
       if (tabelaRef.current) {
-        const canvas = await html2canvas(tabelaRef.current);
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("p", "mm", "a4");
-        
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-  
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-        pdf.save("tabela.pdf");
+        try {
+          const canvas = await html2canvas(tabelaRef.current, {
+            useCORS: true,
+            scale: 2,
+            scrollX: 0,
+            scrollY: 0,
+            backgroundColor: "#fff",
+          });
+      
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`${uuidv4()}.pdf`);
+          setIsLoading(false);
+        } catch (error) {
+          console.error("An error occurred. Please try again.");
+        }
       }
     };
     
@@ -365,10 +378,14 @@ const AnswersTable = () => {
                   Fechar
                 </Button>
 
+                {isLoading? (
+                  <Button type="submit" disabled><LoaderCircle className="animate-spin" />Aguarde</Button>)
+                  :
                 <Button onClick={downloadPDF}>
                   <Download className="mr-2 h-4 w-4" />
                   Baixar PDF
                 </Button>
+                }
 
               </DialogActions>
             </DialogContent>
