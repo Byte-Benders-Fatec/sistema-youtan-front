@@ -1,5 +1,4 @@
 import SideBarLayout from "@/components/SideBar";
-import DashboardLayout from "@/components/DashboardLayout";
 import AnswersTable from "@/components/AnswersTable";
 
 const DashboardsPage = () => {
@@ -9,7 +8,6 @@ const DashboardsPage = () => {
         <SideBarLayout />
 
         <main className="flex-1 p-8 overflow-auto">
-            <DashboardLayout />
             <AnswersTable />
         </main>
 

@@ -55,14 +55,18 @@ const FormAnswered = (props: {answer: Answer}) => {
     };
 
     return (
-        <Card className='flex flex-col lg:max-w-[49%] sm:max-w-[100%]'>
-            <CardHeader className='text-start'>  
-                {props.answer && <CardTitle className='text-2xl'>{props.answer.form.name} - {props.answer.form.category} - {props.answer.userToEvaluate? props.answer.userToEvaluate.name : props.answer.user.name}</CardTitle> }
+        <Card className='flex flex-col lg:min-w-[50%] lg:max-w-[100%] sm:max-w-[100%]'>
+            <CardHeader className='text-start'>
+                {props.answer && (
+                    <CardTitle className='text-lg font-semibold'>
+                        Formulário: <span className='font-thin'>{props.answer.form.name}</span> <br />
+                        Categoria: <span className='font-thin'>{props.answer.form.category}</span> <br />
+                        Usuário: <span className='font-thin'>{props.answer.userToEvaluate ? props.answer.userToEvaluate.name : props.answer.user.name}</span>
+                    </CardTitle>
+                )}
             </CardHeader>
 
-            <div className='px-6 py-3'>
-                <Separator className=''/>
-            </div>
+            <Separator/>
 
             <CardContent className="flex-1 flex flex-col">
                 <div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import { FileSymlink, LoaderCircle } from "lucide-react"
+import { ClipboardPen, FileSymlink, LoaderCircle } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -122,7 +122,7 @@ const FormsToAnswerTable = () => {
                       <div className='flex gap-1'>
                        <Link to={`/forms/${answer.form.id}/respostas/${answer.id}`}>
                           <Button variant="ghost" className='p-1 opacity-70'>
-                            Responder<FileSymlink /> 
+                            <ClipboardPen /> 
                           </Button>
                         </Link>
                         

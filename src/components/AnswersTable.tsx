@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import { LoaderCircle, Pen, Plus, View, X } from "lucide-react"
+import { Eye, FileSymlink, LoaderCircle, Pen, Plus, View, X } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -143,6 +143,7 @@ const AnswersTable = () => {
       e.preventDefault();
       setIsLoading(true);
       newAnswer.form.team = newAnswer.user.team;
+      newAnswer.userToEvaluate = null;
 
       try {
         const [response] = await Promise.all([
@@ -176,13 +177,34 @@ const AnswersTable = () => {
             scrollY: 0,
             backgroundColor: "#fff",
           });
-      
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF('p', 'mm', 'a4');
+    
+          const imgData = canvas.toDataURL("image/png");
+          const pdf = new jsPDF("p", "mm", "a4");
           const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+    
+          const imgWidth = pdfWidth; // Ajusta para caber no PDF
+          const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+          let position = 0; // Altura inicial da página
+    
+          // Divide o conteúdo em várias páginas
+          while (position < imgHeight) {
+            pdf.addImage(
+              imgData,
+              "PNG",
+              0,
+              -position, // Move para a parte correta do canvas
+              imgWidth,
+              imgHeight
+            );
+    
+            position += pdfHeight; // Incrementa para a próxima página
+    
+            if (position < imgHeight) {
+              pdf.addPage();
+            }
+          }
           pdf.save(`${uuidv4()}.pdf`);
           setIsLoading(false);
         } catch (error) {
@@ -190,6 +212,11 @@ const AnswersTable = () => {
         }
       }
     };
+
+    const showFormAnswers = (answer: Answer) => {
+      setIsModalOpen(true);
+      setSelectedAnswers([answer]);
+    }
     
     return (
     <Card className='min-h-[70vh] flex flex-col'>
@@ -341,6 +368,7 @@ const AnswersTable = () => {
               <TableHead>Formulário</TableHead>
               <TableHead>Respondido em</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -363,13 +391,18 @@ const AnswersTable = () => {
                     {answer.userHasAnswered? "Respondido" : "Não Respondido"}
                   </span>
                 </TableCell>
+                <TableCell className="font-medium">
+                  <Button disabled={!answer.userHasAnswered} variant="ghost" className='p-1 opacity-70' onClick={() => showFormAnswers(answer)}>
+                    <Eye /> 
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
 
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-4xl max-h-[100vh] overflow-y-auto justify-between">
-              <div className='gap-3 md:block lg:flex' ref={tabelaRef}>
+            <DialogContent className={selectedAnswers.length == 2 ? "max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl max-h-[100vh] overflow-y-auto justify-between" : ""}>
+              <div className={selectedAnswers.length == 2 ? 'gap-3 md:block lg:flex' : ''} ref={tabelaRef}>
                 {selectedAnswers.map((answer) => (
                   <FormAnswered answer={answer} />
                 ))}

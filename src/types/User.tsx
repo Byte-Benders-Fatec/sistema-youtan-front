@@ -78,7 +78,7 @@ interface Answer {
     user: User;
     form: Form;
     userHasAnswered: boolean;
-    userToEvaluate: User;
+    userToEvaluate: User | null;
     createdAt?: Date;
     updatedAt?: Date;
     deletedAt?: Date;
